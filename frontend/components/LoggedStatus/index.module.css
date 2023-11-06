@@ -1,0 +1,41 @@
+.Container {
+  position: relative;
+}
+
+.Dropdown {
+  display: none;
+  background-color: #fff;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 10px;
+  position: absolute;
+  right: 0;
+  z-index: 1;
+  width: 300px;
+}
+
+.TextConainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.AccountID {
+  word-wrap: break-word;
+}
+
+.Show {
+  display: block;
+}
+
+.Dropdown button {
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.Container button{
+  background: radial-gradient(circle, rgba(126, 135, 255, 1) -12% ,rgba(57, 59, 76, 0.8) 100%);
+  background: rgba(126, 135, 255, 0.8);
+}

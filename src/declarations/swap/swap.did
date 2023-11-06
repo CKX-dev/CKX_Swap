@@ -1,0 +1,313 @@
+type WithdrawState = 
+ record {
+   refundStatus: bool;
+   tokenId: text;
+   userPId: principal;
+   value: nat;
+ };
+type WithdrawRefundReceipt = 
+ variant {
+   Err: text;
+   Ok: bool;
+ };
+type UserInfoPage = 
+ record {
+   balances: record {
+               vec record {
+                     text;
+                     nat;
+                   };
+               nat;
+             };
+   lpBalances: record {
+                 vec record {
+                       text;
+                       nat;
+                     };
+                 nat;
+               };
+ };
+type UserInfo = 
+ record {
+   balances: vec record {
+                   text;
+                   nat;
+                 };
+   lpBalances: vec record {
+                     text;
+                     nat;
+                   };
+ };
+type TxReceipt = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type TokenInfoWithType = 
+ record {
+   decimals: nat8;
+   fee: nat;
+   id: text;
+   name: text;
+   symbol: text;
+   tokenType: text;
+   totalSupply: nat;
+ };
+type TokenInfoExt = 
+ record {
+   decimals: nat8;
+   fee: nat;
+   id: text;
+   name: text;
+   symbol: text;
+   totalSupply: nat;
+ };
+type TokenAnalyticsInfo = 
+ record {
+   decimals: nat8;
+   fee: nat;
+   name: text;
+   symbol: text;
+   totalSupply: nat;
+ };
+type Time = int;
+type SwapLastTransaction = 
+ variant {
+   NotFound: bool;
+   RemoveLiquidityOutAmount: record {
+                               nat;
+                               nat;
+                             };
+   SwapOutAmount: nat;
+ };
+type SwapInfoExt = 
+ record {
+   depositCounter: nat;
+   feeOn: bool;
+   feeTo: principal;
+   owner: principal;
+   txcounter: nat;
+ };
+type SwapInfo = 
+ record {
+   cycles: nat;
+   feeOn: bool;
+   feeTo: principal;
+   owner: principal;
+   pairs: vec PairInfoExt;
+   tokens: vec TokenInfoExt;
+ };
+type Swap = 
+ service {
+   addAuth: (principal) -> (bool);
+   addLiquidity: (principal, principal, nat, nat, nat, nat, int) ->
+    (TxReceipt);
+   addLiquidityForUser: (principal, principal, principal, nat, nat) ->
+    (TxReceipt);
+   addLiquidityForUserTest: (principal, principal, principal, nat, nat) ->
+    (text);
+   addToken: (principal, text) -> (TxReceipt);
+   addUserToBlocklist: (principal) -> (bool);
+   allowance: (text, principal, principal) -> (nat) query;
+   approve: (text, principal, nat) -> (bool);
+   balanceOf: (text, principal) -> (nat) query;
+   burn: (text, nat) -> (bool);
+   createPair: (principal, principal) -> (TxReceipt);
+   decimals: (text) -> (nat8) query;
+   deposit: (principal, nat) -> (TxReceipt);
+   depositTo: (principal, principal, nat) -> (TxReceipt);
+   exportBalances: (text) -> (opt vec record {
+                                        principal;
+                                        nat;
+                                      }) query;
+   exportFaileWithdraws: () -> (vec record {
+                                      text;
+                                      WithdrawState;
+                                    }) query;
+   exportLPTokens: () -> (vec TokenInfoExt) query;
+   exportPairs: () -> (vec PairInfoExt) query;
+   exportRewardInfo: () -> (vec record {
+                                  principal;
+                                  vec RewardInfo;
+                                }) query;
+   exportRewardPairs: () -> (vec PairInfoExt) query;
+   exportSubAccounts: () ->
+    (vec record {
+           principal;
+           DepositSubAccounts;
+         }) query;
+   exportSwapInfo: () -> (SwapInfoExt) query;
+   exportTokenTypes: () -> (vec record {
+                                  text;
+                                  text;
+                                }) query;
+   exportTokens: () -> (vec TokenInfoExt) query;
+   failedWithdrawRefund: (text) -> (WithdrawRefundReceipt);
+   getAllPairs: () -> (vec PairInfoExt) query;
+   getAllRewardPairs: () -> (vec PairInfoExt) query;
+   getAuthList: () -> (vec record {
+                             principal;
+                             bool;
+                           }) query;
+   getBlocklistedUsers: () -> (vec record {
+                                     principal;
+                                     bool;
+                                   });
+   getCapDetails: () -> (CapDetails) query;
+   getHolders: (text) -> (nat) query;
+   getICRC1SubAccountBalance: (principal, text) -> (ICRC1SubAccountBalance);
+   getLPTokenId: (principal, principal) -> (text) query;
+   getLastTransactionOutAmount: () -> (SwapLastTransaction) query;
+   getNumPairs: () -> (nat) query;
+   getPair: (principal, principal) -> (opt PairInfoExt) query;
+   getPairs: (nat, nat) -> (vec PairInfoExt, nat) query;
+   getSupportedTokenList: () -> (vec TokenInfoWithType) query;
+   getSupportedTokenListByName: (text, nat, nat) -> (vec TokenInfoExt,
+    nat) query;
+   getSupportedTokenListSome: (nat, nat) -> (vec TokenInfoExt, nat) query;
+   getSwapInfo: () -> (SwapInfo) query;
+   getTokenMetadata: (text) -> (TokenAnalyticsInfo) query;
+   getUserBalances: (principal) -> (vec record {
+                                          text;
+                                          nat;
+                                        }) query;
+   getUserICRC1SubAccount: (principal) -> (text);
+   getUserInfo: (principal) -> (UserInfo) query;
+   getUserInfoAbove: (principal, nat, nat) -> (UserInfo) query;
+   getUserInfoByNamePageAbove: (principal, int, text, nat, nat, int, 
+    text, nat, nat) -> (UserInfoPage) query;
+   getUserLPBalances: (principal) -> (vec record {
+                                            text;
+                                            nat;
+                                          }) query;
+   getUserLPBalancesAbove: (principal, nat) -> (vec record {
+                                                      text;
+                                                      nat;
+                                                    }) query;
+   getUserReward: (principal, text, text) -> (Result_1) query;
+   historySize: () -> (nat) query;
+   initiateICRC1Transfer: () -> (vec nat8);
+   initiateICRC1TransferForUser: (principal) -> (ICRCTxReceipt);
+   monitorMetrics: () -> (MonitorMetrics);
+   name: (text) -> (text) query;
+   removeAuth: (principal) -> (bool);
+   removeLiquidity: (principal, principal, nat, nat, nat, principal, 
+    int) -> (TxReceipt);
+   removeUserFromBlocklist: (principal) -> (bool);
+   retryDeposit: (principal) -> (TxReceipt);
+   retryDepositTo: (principal, principal, nat) -> (TxReceipt);
+   setCapV1EnableStatus: (bool) -> (bool);
+   setCapV2CanisterId: (text) -> (bool);
+   setCapV2EnableStatus: (bool) -> (Result);
+   setFeeForToken: (text, nat) -> (bool);
+   setFeeOn: (bool) -> (bool);
+   setFeeTo: (principal) -> (bool);
+   setGlobalTokenFee: (nat) -> (bool);
+   setMaxTokens: (nat) -> (bool);
+   setOwner: (principal) -> (bool);
+   swapExactTokensForTokens: (nat, nat, vec text, principal, int) ->
+    (TxReceipt);
+   symbol: (text) -> (text) query;
+   totalSupply: (text) -> (nat) query;
+   transferFrom: (text, principal, principal, nat) -> (bool);
+   updateAllTokenMetadata: () -> (bool);
+   updateTokenFees: () -> (bool);
+   updateTokenMetadata: (text) -> (bool);
+   withdraw: (principal, nat) -> (TxReceipt);
+ };
+type Status = 
+ variant {
+   running;
+   stopped;
+   stopping;
+ };
+type RewardInfo = 
+ record {
+   amount: nat;
+   tokenId: text;
+ };
+type Result_1 = 
+ variant {
+   err: text;
+   ok: record {
+         nat;
+         nat;
+       };
+ };
+type Result = 
+ variant {
+   err: text;
+   ok: bool;
+ };
+type PairInfoExt = 
+ record {
+   blockTimestampLast: int;
+   creator: principal;
+   id: text;
+   kLast: nat;
+   lptoken: text;
+   price0CumulativeLast: nat;
+   price1CumulativeLast: nat;
+   reserve0: nat;
+   reserve1: nat;
+   token0: text;
+   token1: text;
+   totalSupply: nat;
+ };
+type MonitorMetrics = 
+ record {
+   blocklistedUsersCount: nat;
+   canisterStatus: CanisterStatus;
+   cycles: nat;
+   depositTransactionSize: nat;
+   lpTokenAllowanceSize: nat;
+   lpTokenBalancesSize: nat;
+   lptokensSize: nat;
+   pairsCount: nat;
+   rewardInfo: nat;
+   rewardPairsSize: nat;
+   rewardTokensSize: nat;
+   tokenAllowanceSize: nat;
+   tokenBalancesSize: nat;
+   tokenCount: nat;
+ };
+type ICRCTxReceipt = 
+ variant {
+   Err: text;
+   Ok: vec nat8;
+ };
+type ICRC1SubAccountBalance = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type DepositSubAccounts = 
+ record {
+   created_at: Time;
+   depositAId: text;
+   subaccount: blob;
+   transactionOwner: principal;
+ };
+type CapDetails = 
+ record {
+   CapV1RootBucketId: opt text;
+   CapV1Status: bool;
+   CapV2RootBucketId: opt text;
+   CapV2Status: bool;
+ };
+type CanisterStatus = 
+ record {
+   cycles: nat;
+   memory_size: nat;
+   module_hash: opt blob;
+   settings: CanisterSettings;
+   status: Status;
+ };
+type CanisterSettings = 
+ record {
+   compute_allocation: opt nat;
+   controllers: opt vec principal;
+   freezing_threshold: opt nat;
+   memory_allocation: opt nat;
+ };
+service : (principal, principal) -> Swap

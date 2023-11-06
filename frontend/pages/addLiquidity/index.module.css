@@ -1,0 +1,129 @@
+.PageContainer {
+  min-height: calc(100vh - 62px);
+  background: rgba(24, 25, 33, 1);
+  color: white;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.CardContainer {
+  width: 920px;
+  margin: auto;
+  padding: 24px;
+
+  background-color: rgb(17, 25, 54);
+  border-radius: 12px;
+}
+
+form {
+  display: flex;
+}
+
+.TitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  width: 100%;
+}
+
+.TitleContainer h1 {
+  font-size: 24px;
+  margin: 0;
+}
+
+.TitleContainer button {
+  padding: 8px 16px;
+  margin: 0 10px;
+
+  background-color: transparent;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+.TitleContainer button:hover {
+  background-color: rgb(17, 25, 54);
+}
+
+.LeftContainer {
+  display: flex;
+  flex-direction: column;
+  width: 50%;
+}
+
+.PairSelection,
+.DepositAmounts {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.TokenContainer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+h2 {
+  font-size: 20px;
+}
+
+label {
+  font-weight: bold;
+}
+
+select,
+input {
+  width: 100%;
+  padding: 8px;
+  margin: 8px 0;
+
+  border: none;
+  background-color: #1a223f;
+  color: #ffffff;
+  border-radius: 4px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+
+select {
+  cursor: pointer;
+}
+
+input[type="number"]::placeholder {
+  color: #ffffff;
+}
+
+.RightContainer {
+  width: 50%;
+  padding: 20px;
+
+  background-color: rgb(17, 25, 54);
+}
+
+.PriceRange h2 {
+  font-size: 20px;
+}
+
+.PriceRange p {
+  font-size: 16px;
+}
+
+.PriceRange span {
+  color: rgb(132, 146, 196);
+}
+
+button {
+  padding: 12px 24px;
+  margin: 20px 0;
+
+  background-color: rgb(104, 77, 153);
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 4px;
+}

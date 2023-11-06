@@ -1,0 +1,10 @@
+.TokenListContainer button {
+  width: 100%;
+}
+
+.LineContainer {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  color: rgb(132, 146, 196);
+}

@@ -1,0 +1,7 @@
+.PairContainer {
+  gap: 0 20px;
+  width: 100%;
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: repeat(4, 1fr);
+}

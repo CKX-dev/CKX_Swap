@@ -1,0 +1,52 @@
+.PairCard {
+  height: 140px;
+  padding: 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.PairCard:nth-child(1) {
+  background: rgba(80, 95, 186, 0.34);
+}
+
+.PairCard:nth-child(2) {
+  background: rgba(101, 80, 186, 0.34);
+}
+
+.PairCard:nth-child(3) {
+  background: rgba(45, 148, 243, 0.34);
+}
+
+.PairCard:nth-child(4) {
+  background: rgba(162, 88, 145, 0.34);
+}
+
+
+.InfoContainer {
+  display: flex;
+  color: white;
+  font-weight: 700;
+}
+
+.VolumeContainer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 28px;
+}
+
+.VolumeInnerContainer {
+  display: flex;
+  flex-direction: column;
+}
+
+.VolumeInnerContainer div {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+
+.VolumeInnerContainer span {
+  margin-top: 8px;
+  color: white;
+  font-weight: 700;
+}
