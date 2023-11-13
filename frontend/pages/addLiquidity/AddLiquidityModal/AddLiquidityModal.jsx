@@ -52,10 +52,34 @@ function AddLiquidityModal({
     try {
       setLoading(true);
       let res;
+      const record = {
+        fee: [],
+        memo: [],
+        from_subaccount: [],
+        created_at_time: [],
+        amount: formValues.amount0Desired,
+        expected_allowance: [],
+        expires_at: [],
+        spender: Principal.fromText(swap.canisterId),
+      };
+      const record1 = {
+        fee: [],
+        memo: [],
+        from_subaccount: [],
+        created_at_time: [],
+        amount: formValues.amount1Desired,
+        expected_allowance: [],
+        expires_at: [],
+        spender: Principal.fromText(swap.canisterId),
+      };
 
       if (formValues.token0 === pair[0].token0) {
-        await token0Actor.approve(Principal.fromText(swap.canisterId), formValues.amount0Desired);
-        await token1Actor.approve(Principal.fromText(swap.canisterId), formValues.amount1Desired);
+        // await token0Actor.icrc2_approve(Principal.fromText(swap.canisterId),
+        // formValues.amount0Desired);
+        // await token1Actor.icrc2_approve(Principal.fromText(swap.canisterId),
+        // formValues.amount1Desired);
+        await token0Actor.icrc2_approve(record);
+        await token1Actor.icrc2_approve(record1);
 
         await swapActor.deposit(
           Principal.fromText(formValues.token0),
@@ -79,8 +103,12 @@ function AddLiquidityModal({
           timestamp,
         );
       } else {
-        await token1Actor.approve(Principal.fromText(swap.canisterId), formValues.amount0Desired);
-        await token0Actor.approve(Principal.fromText(swap.canisterId), formValues.amount1Desired);
+        // await token1Actor.icrc2_approve(Principal.fromText(swap.canisterId),
+        // formValues.amount0Desired);
+        // await token0Actor.icrc2_approve(Principal.fromText(swap.canisterId),
+        // formValues.amount1Desired);
+        await token1Actor.icrc2_approve(record);
+        await token0Actor.icrc2_approve(record1);
 
         await swapActor.deposit(
           Principal.fromText(formValues.token0),
@@ -104,7 +132,7 @@ function AddLiquidityModal({
           timestamp,
         );
       }
-
+      // console.log('res la: ', res);
       setLoading(false);
 
       closeAddLiquidityModal();
@@ -112,6 +140,7 @@ function AddLiquidityModal({
       if ('ok' in res) {
         toast.success('Liquidity added successfully');
       } else {
+        console.log('RES: ', res);
         toast.error('Liquidity not added successfully');
       }
     } catch (e) {

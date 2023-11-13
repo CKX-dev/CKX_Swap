@@ -1,5 +1,9 @@
 export const idlFactory = ({ IDL }) => {
   const TxReceipt = IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text });
+  const ValidateFunctionReturnType = IDL.Variant({
+    'Ok' : IDL.Text,
+    'Err' : IDL.Text,
+  });
   const WithdrawState = IDL.Record({
     'tokenId' : IDL.Text,
     'refundStatus' : IDL.Bool,
@@ -163,6 +167,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'addToken' : IDL.Func([IDL.Principal, IDL.Text], [TxReceipt], []),
+    'addTokenValidate' : IDL.Func(
+        [IDL.Principal, IDL.Text],
+        [ValidateFunctionReturnType],
+        [],
+      ),
     'addUserToBlocklist' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'allowance' : IDL.Func(
         [IDL.Text, IDL.Principal, IDL.Principal],
@@ -180,6 +189,7 @@ export const idlFactory = ({ IDL }) => {
         [TxReceipt],
         [],
       ),
+    'executeFundRecoveryForUser' : IDL.Func([IDL.Principal], [TxReceipt], []),
     'exportBalances' : IDL.Func(
         [IDL.Text],
         [IDL.Opt(IDL.Vec(IDL.Tuple(IDL.Principal, IDL.Nat)))],
@@ -319,6 +329,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'monitorMetrics' : IDL.Func([], [MonitorMetrics], []),
     'name' : IDL.Func([IDL.Text], [IDL.Text], ['query']),
+    'registerFundRecoveryForUser' : IDL.Func(
+        [IDL.Principal, IDL.Principal, IDL.Nat],
+        [TxReceipt],
+        [],
+      ),
     'removeAuth' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'removeLiquidity' : IDL.Func(
         [
@@ -347,6 +362,11 @@ export const idlFactory = ({ IDL }) => {
     'setFeeOn' : IDL.Func([IDL.Bool], [IDL.Bool], []),
     'setFeeTo' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'setGlobalTokenFee' : IDL.Func([IDL.Nat], [IDL.Bool], []),
+    'setMaxTokenValidate' : IDL.Func(
+        [IDL.Nat],
+        [ValidateFunctionReturnType],
+        [],
+      ),
     'setMaxTokens' : IDL.Func([IDL.Nat], [IDL.Bool], []),
     'setOwner' : IDL.Func([IDL.Principal], [IDL.Bool], []),
     'swapExactTokensForTokens' : IDL.Func(
@@ -364,6 +384,16 @@ export const idlFactory = ({ IDL }) => {
     'updateAllTokenMetadata' : IDL.Func([], [IDL.Bool], []),
     'updateTokenFees' : IDL.Func([], [IDL.Bool], []),
     'updateTokenMetadata' : IDL.Func([IDL.Text], [IDL.Bool], []),
+    'validateExecuteFundRecoveryForUser' : IDL.Func(
+        [IDL.Principal],
+        [ValidateFunctionReturnType],
+        [],
+      ),
+    'validateRegisterFundRecoveryForUser' : IDL.Func(
+        [IDL.Principal, IDL.Principal, IDL.Nat],
+        [ValidateFunctionReturnType],
+        [],
+      ),
     'withdraw' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
   });
   return Swap;

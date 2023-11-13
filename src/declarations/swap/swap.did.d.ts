@@ -83,6 +83,10 @@ export interface Swap {
     string
   >,
   'addToken' : ActorMethod<[Principal, string], TxReceipt>,
+  'addTokenValidate' : ActorMethod<
+    [Principal, string],
+    ValidateFunctionReturnType
+  >,
   'addUserToBlocklist' : ActorMethod<[Principal], boolean>,
   'allowance' : ActorMethod<[string, Principal, Principal], bigint>,
   'approve' : ActorMethod<[string, Principal, bigint], boolean>,
@@ -92,6 +96,7 @@ export interface Swap {
   'decimals' : ActorMethod<[string], number>,
   'deposit' : ActorMethod<[Principal, bigint], TxReceipt>,
   'depositTo' : ActorMethod<[Principal, Principal, bigint], TxReceipt>,
+  'executeFundRecoveryForUser' : ActorMethod<[Principal], TxReceipt>,
   'exportBalances' : ActorMethod<[string], [] | [Array<[Principal, bigint]>]>,
   'exportFaileWithdraws' : ActorMethod<[], Array<[string, WithdrawState]>>,
   'exportLPTokens' : ActorMethod<[], Array<TokenInfoExt>>,
@@ -148,6 +153,10 @@ export interface Swap {
   'initiateICRC1TransferForUser' : ActorMethod<[Principal], ICRCTxReceipt>,
   'monitorMetrics' : ActorMethod<[], MonitorMetrics>,
   'name' : ActorMethod<[string], string>,
+  'registerFundRecoveryForUser' : ActorMethod<
+    [Principal, Principal, bigint],
+    TxReceipt
+  >,
   'removeAuth' : ActorMethod<[Principal], boolean>,
   'removeLiquidity' : ActorMethod<
     [Principal, Principal, bigint, bigint, bigint, Principal, bigint],
@@ -163,6 +172,7 @@ export interface Swap {
   'setFeeOn' : ActorMethod<[boolean], boolean>,
   'setFeeTo' : ActorMethod<[Principal], boolean>,
   'setGlobalTokenFee' : ActorMethod<[bigint], boolean>,
+  'setMaxTokenValidate' : ActorMethod<[bigint], ValidateFunctionReturnType>,
   'setMaxTokens' : ActorMethod<[bigint], boolean>,
   'setOwner' : ActorMethod<[Principal], boolean>,
   'swapExactTokensForTokens' : ActorMethod<
@@ -175,6 +185,14 @@ export interface Swap {
   'updateAllTokenMetadata' : ActorMethod<[], boolean>,
   'updateTokenFees' : ActorMethod<[], boolean>,
   'updateTokenMetadata' : ActorMethod<[string], boolean>,
+  'validateExecuteFundRecoveryForUser' : ActorMethod<
+    [Principal],
+    ValidateFunctionReturnType
+  >,
+  'validateRegisterFundRecoveryForUser' : ActorMethod<
+    [Principal, Principal, bigint],
+    ValidateFunctionReturnType
+  >,
   'withdraw' : ActorMethod<[Principal, bigint], TxReceipt>,
 }
 export interface SwapInfo {
@@ -232,6 +250,8 @@ export interface UserInfoPage {
   'lpBalances' : [Array<[string, bigint]>, bigint],
   'balances' : [Array<[string, bigint]>, bigint],
 }
+export type ValidateFunctionReturnType = { 'Ok' : string } |
+  { 'Err' : string };
 export type WithdrawRefundReceipt = { 'Ok' : boolean } |
   { 'Err' : string };
 export interface WithdrawState {

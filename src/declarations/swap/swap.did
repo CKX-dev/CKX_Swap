@@ -10,6 +10,11 @@ type WithdrawRefundReceipt =
    Err: text;
    Ok: bool;
  };
+type ValidateFunctionReturnType = 
+ variant {
+   Err: text;
+   Ok: text;
+ };
 type UserInfoPage = 
  record {
    balances: record {
@@ -107,6 +112,7 @@ type Swap =
    addLiquidityForUserTest: (principal, principal, principal, nat, nat) ->
     (text);
    addToken: (principal, text) -> (TxReceipt);
+   addTokenValidate: (principal, text) -> (ValidateFunctionReturnType);
    addUserToBlocklist: (principal) -> (bool);
    allowance: (text, principal, principal) -> (nat) query;
    approve: (text, principal, nat) -> (bool);
@@ -116,6 +122,7 @@ type Swap =
    decimals: (text) -> (nat8) query;
    deposit: (principal, nat) -> (TxReceipt);
    depositTo: (principal, principal, nat) -> (TxReceipt);
+   executeFundRecoveryForUser: (principal) -> (TxReceipt);
    exportBalances: (text) -> (opt vec record {
                                         principal;
                                         nat;
@@ -190,6 +197,7 @@ type Swap =
    initiateICRC1TransferForUser: (principal) -> (ICRCTxReceipt);
    monitorMetrics: () -> (MonitorMetrics);
    name: (text) -> (text) query;
+   registerFundRecoveryForUser: (principal, principal, nat) -> (TxReceipt);
    removeAuth: (principal) -> (bool);
    removeLiquidity: (principal, principal, nat, nat, nat, principal, 
     int) -> (TxReceipt);
@@ -203,6 +211,7 @@ type Swap =
    setFeeOn: (bool) -> (bool);
    setFeeTo: (principal) -> (bool);
    setGlobalTokenFee: (nat) -> (bool);
+   setMaxTokenValidate: (nat) -> (ValidateFunctionReturnType);
    setMaxTokens: (nat) -> (bool);
    setOwner: (principal) -> (bool);
    swapExactTokensForTokens: (nat, nat, vec text, principal, int) ->
@@ -213,6 +222,10 @@ type Swap =
    updateAllTokenMetadata: () -> (bool);
    updateTokenFees: () -> (bool);
    updateTokenMetadata: (text) -> (bool);
+   validateExecuteFundRecoveryForUser: (principal) ->
+    (ValidateFunctionReturnType);
+   validateRegisterFundRecoveryForUser: (principal, principal, nat) ->
+    (ValidateFunctionReturnType);
    withdraw: (principal, nat) -> (TxReceipt);
  };
 type Status = 

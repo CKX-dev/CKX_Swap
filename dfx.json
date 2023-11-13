@@ -5,13 +5,16 @@
       "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
     },
     "swap": {
+      "type": "motoko",
       "main": "canisters/swap/src/swap.mo"
     },
     "token0": {
-      "main": "canisters/token/token.mo"
+      "type": "motoko",
+      "main": "canisters/ICRC1/Canisters/token.mo"
     },
     "token1": {
-      "main": "canisters/token/token.mo"
+      "type": "motoko",
+      "main": "canisters/ICRC1/Canisters/token.mo"
     },
     "assets": {
       "dependencies": [
@@ -28,7 +31,7 @@
   },
   "defaults": {
     "build": {
-      "packtool": ""
+      "packtool": "mops sources"
     }
   },
   "networks": {
