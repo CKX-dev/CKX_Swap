@@ -1,25 +1,39 @@
 body {
-    margin: 0;
-    /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+  margin: 0;
+  /* font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
     "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
     sans-serif; */
-    font-family: 'Inter', sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    color: #424242;
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  color: #424242;
 }
 
-* button{
+* button {
   /* background-color: #A6ADFA; */
   font-weight: 500;
   padding: 4px, 12px, 4px, 12px;
   border-radius: 6px;
   font-size: 16px;
-  /* background: radial-gradient(ellipse at bottom,rgba(126, 135, 255, 0.8) 0% ,  rgba(24, 25, 33, 1) 100%); */
+  color: #a6adfa;
   background-color: rgba(126, 135, 255, 0.8);
 }
 
-html, body {
+.buttonType2 {
+  font-weight: 500;
+  padding: 4px, 12px, 4px, 12px;
+  border-radius: 6px;
+  font-size: 16px;
+  background-image: radial-gradient(
+    circle at 50% 120%,
+    rgba(126, 135, 255, 0.8),
+    rgba(57, 59, 76, 1),
+    rgba(32, 33, 45, 1)
+  );
+}
+
+html,
+body {
   box-sizing: border-box;
   background: rgba(24, 25, 33, 1);
 }

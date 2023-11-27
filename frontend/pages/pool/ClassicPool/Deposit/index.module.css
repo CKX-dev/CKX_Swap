@@ -1,0 +1,51 @@
+
+.buttonMenu{
+  display: flex; 
+  gap: 12px; 
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 500;
+  color: rgba(156, 158, 171, 1);
+}
+
+.RightContent{
+  padding-left: 28px;
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  font-size: 16px;
+  color: rgba(204, 204, 204, 1);
+  width: 50%;
+  font-weight: 500;
+}
+
+.RightHeader{
+  font-size:24px; 
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+  margin-bottom: 28px;
+}
+
+.RightTitle{
+  font-size: 14px;
+  color: rgba(133, 134, 151, 1);
+  font-weight: 400;
+}
+
+.SmallText{
+  font-weight:300;
+  size: 14px;
+  color: rgba(204, 204, 204, 1);
+  margin-top: 6px;
+  line-height: 17px;
+}
+
+.Deposit{
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  border: 1px solid rgba(44, 45, 59, 1);
+  width: 60%;
+}

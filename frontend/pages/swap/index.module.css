@@ -68,7 +68,7 @@
   height: 48px;
   margin-top: 30px;
 
-  /* background: linear-gradient(89.44deg, rgb(85, 105, 219) -0.31%, rgb(133, 114, 255) 91.14%); */
+  background: linear-gradient(89.44deg, rgb(85, 105, 219) -0.31%, rgb(133, 114, 255) 91.14%);
   font-weight: 500;
   color: rgba(166, 173, 250, 1);
   color: white;
@@ -91,6 +91,8 @@
   border-radius: 8px;
   text-decoration: none;
 
+  /* background: linear-gradient(89.44deg, rgb(85, 105, 219) -0.31%, rgb(133, 114, 255) 91.14%); */
+  background: radial-gradient(ellipse at bottom,rgba(126, 135, 255, 0.8) 0% ,  rgba(24, 25, 33, 1) 100%);
   font-size: 18px;
   cursor: not-allowed;
 }

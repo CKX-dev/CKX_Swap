@@ -1,0 +1,92 @@
+
+.buttonMenu{
+  display: flex; 
+  gap: 12px; 
+  padding: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: 500;
+  color: rgba(156, 158, 171, 1);
+}
+
+.selectedButton{
+  background-color: rgba(38, 39, 53, 1);
+  color: rgba(172, 179, 249, 1);
+  border-radius: 12px;
+}
+
+.RightContent{
+  padding-left: 28px;
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  font-size: 16px;
+  color: rgba(204, 204, 204, 1);
+  width: 50%;
+  font-weight: 500;
+}
+
+.RightHeader{
+  font-size:24px; 
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.RightContract{
+  margin-top: 24px;
+  margin-bottom: 24px;
+  gap: 8px;
+}
+
+.RightTitle{
+  font-size: 14px;
+  color: rgba(133, 134, 151, 1);
+  font-weight: 400;
+}
+
+.RightRow{
+  border-top: 1px solid rgba(44, 45, 59, 1);
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+}
+
+.RightFirstRow{
+  display: flex;
+}
+
+.RightFirstRow > div:nth-child(2) {
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  padding-left: 24px;
+}
+
+.RightFirstRowElement{
+  width: 50%;
+  margin-top: 18px;
+  margin-bottom: 18px;
+  padding: 8px
+}
+
+.RightSecondRow{
+  display: flex;
+  padding: 32px 0px;
+  border-top: 1px solid rgba(44, 45, 59, 1);
+  /* justify-content: flex-end; */
+}
+
+.RightSecondRow > div{
+  width: 23%;
+}
+
+.RightSecondRow > div:nth-child(2), .RightSecondRow > div:nth-child(3){
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  padding-left: 32px;
+}
+
+.RightSecondRow > div:nth-child(4){
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  justify-content: flex-end;
+  padding-left: 80px;
+  box-sizing: border-box;
+}
+
+.LpReward{
+  margin-top: 48px;
+}

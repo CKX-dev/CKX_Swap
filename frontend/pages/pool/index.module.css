@@ -1,0 +1,56 @@
+.PageContainer {
+  color: white;
+  width: 75%;
+  margin: auto;
+  margin-top: 100px;
+  font-size: 20px;
+}
+
+.Heading {
+  font-size: 24px;
+}
+
+.GridContainer { 
+  display: flex; 
+  margin-top: 40px; 
+  padding: 4px 20px 4px 20px;
+}
+
+.GridContainer > div {
+
+}
+
+.GridPools {
+  width: 34%;
+  display: flex;
+  gap: 26px;
+}
+
+.GridType {
+  width: 20%;
+}
+
+.GridLiquidity {
+  width: 23%;
+  font-weight: 400;
+}
+
+.GridAPR {
+  width: 21%;
+  font-weight: 400;
+}
+
+.PoolCards{
+  display: flex;
+  margin-top: 24px;
+  border-radius: 12px;
+  background-color: rgba(44, 45, 59, 0.2);
+  padding: 12px 20px 12px 20px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 24px;
+}
+
+.PoolCards > div {
+  
+}
