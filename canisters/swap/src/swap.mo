@@ -51,7 +51,7 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
         #TemporarilyUnavailable;
         #GenericError;
         #Expired; //only for approve
-        #CustomError : Text; // custom error for sonic logic
+        #CustomError : Text; // custom error for logic
     };
     type TokenTxReceipt = {
         #Ok : Nat;
@@ -824,9 +824,9 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
     };
 
     // update token transfer fees,
-    // e.g. tokenA's transfer fee is 1 when added to sonic, in sonic's record the fee is 1,
-    // later tokenA's transfer fee is changed to 2, if sonic is not up to date, will cause
-    // sonic to lose money when users withdraw tokenA from sonic
+    // e.g. tokenA's transfer fee is 1 when added to , in 's record the fee is 1,
+    // later tokenA's transfer fee is changed to 2, if  is not up to date, will cause
+    //  to lose money when users withdraw tokenA from 
     public shared (msg) func updateTokenFees() : async Bool {
         assert (msg.caller == owner);
         for ((tokenId, info) in Iter.fromArray(tokens.getTokenInfoList())) {

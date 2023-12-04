@@ -16,6 +16,10 @@
       "type": "motoko",
       "main": "canisters/ICRC1/Canisters/token.mo"
     },
+    "deposit": {
+      "type": "motoko",
+      "main": "canisters/deposit/deposit.mo"
+    },
     "assets": {
       "dependencies": [
         "swap", "token0", "token1"

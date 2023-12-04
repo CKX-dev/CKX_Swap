@@ -53,7 +53,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         #TemporarilyUnavailable;
         #GenericError;
         #Expired; //only for approve
-        #CustomError : Text; // custom error for sonic logic
+        #CustomError : Text; // custom error for logic
     };
     type ICRCTokenTxReceipt = {
         #Ok : Nat;

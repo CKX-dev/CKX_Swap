@@ -16,11 +16,8 @@ import Prelude "mo:base/Prelude";
 import Buffer "mo:base/Buffer";
 import Utils "./utils";
 import Tokens "./tokens";
-// import Types "./types";
-// import Cap "./cap/Cap";
-// import CapV2 "./cap/CapV2";
-// import IC "./cap/IC";
-// import Root "./cap/Root";
+import ExperimentalCycles "mo:base/ExperimentalCycles";
+import SB "mo:StableBuffer/StableBuffer";
 import Cycles = "mo:base/ExperimentalCycles";
 import Nat32 "mo:base/Nat32";
 import Blob "mo:base/Blob";
@@ -28,10 +25,16 @@ import Blob "mo:base/Blob";
 import Bool "mo:base/Bool";
 import Error "mo:base/Error";
 import Float "mo:base/Float";
+import ICRCtoken "../ICRC1/Canisters/Token";
 
 // import Account "./Account";
 
-shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = this {
+import ICRC1 "./ICRC1";
+import Archive "./ICRC1/Canisters/Archive";
+
+// shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal, init_args : ICRC1.TokenInitArgs) : async ICRC1.FullInterface = this {
+shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal, 
+_name: Text, _symbol: Text, deposit_token_id: Text) = this {
     type Errors = {
         #InsufficientBalance;
         #InsufficientAllowance;
@@ -54,7 +57,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         #TemporarilyUnavailable;
         #GenericError;
         #Expired; //only for approve
-        #CustomError : Text; // custom error for sonic logic
+        #CustomError : Text; // custom error for logic
     };
     type ICRCTokenTxReceipt = {
         #Ok : Nat;
@@ -123,6 +126,19 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
     private var tokens : Tokens.Tokens = Tokens.Tokens(feeTo, []);
     private stable let depositCounterV2 : Nat = 10000;
     private stable var owner : Principal = owner_;
+    private var canister_token_ID: Text = deposit_token_id;
+
+    public shared func getTokenId(): async Text {
+        return canister_token_ID;
+    };
+
+    public shared  ({ caller }) func setTokenId(canisterId: Text): async Text {
+        if(caller != owner_){
+            return "You are not owner";
+        };
+        canister_token_ID := canisterId;
+        return "Success";
+    };
 
     public type TransferReceipt = {
         #Ok : Nat;
@@ -136,48 +152,48 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
     public type TxReceipt = Result.Result<Nat, Text>;
     private stable var txcounter : Nat = 0;
 
-    public shared (msg) func deposit(tokenId : Principal, value : Nat) : async TxReceipt {
-        let tid : Text = Principal.toText(tokenId);
-        ////// CHECK THIS
-        if (tokens.hasToken(tid) == false) return #err("token not exist");
+    // public shared (msg) func deposit(tokenId : Principal, value : Nat) : async TxReceipt {
+    //     let tid : Text = Principal.toText(tokenId);
+    //     ////// CHECK THIS
+    //     if (tokens.hasToken(tid) == false) return #err("token not exist");
 
-        let tokenCanister = _getTokenActor(tid);
+    //     let tokenCanister = _getTokenActor(tid);
 
-        let result = await _transferFrom(tokenCanister, msg.caller, value, tokens.getFee(tid));
-        let txid = switch (result) {
-            case (#Ok(id)) { id };
-            case (#Err(e)) { return #err("token transfer failed:" # tid) };
-            // case(#ICRCTransferError(e)) { return #err("token transfer failed:" # tid); };
-            case (#ICRCTransferError(e)) {
-                switch (e) {
-                    case (#BadBurn) { return #err("BadBurn") };
-                    case (#BadFee) { return #err("BadFee") };
-                    case (#CreatedInFuture) { return #err("CreatedInFuture") };
-                    case (#CustomError(text)) {
-                        return #err("CustomError: " # text)
-                    };
-                    case (#Duplicate) { return #err("Duplicate") };
-                    case (#Expired) { return #err("Expired") };
-                    case (#GenericError) { return #err("GenericError") };
-                    case (#InsufficientAllowance) {
-                        return #err("InsufficientAllowance")
-                    };
-                    case (#InsufficientFunds) {
-                        return #err("InsufficientFunds")
-                    };
-                    case (#TemporarilyUnavailable) {
-                        return #err("TemporarilyUnavailable")
-                    };
-                    case (#TooOld) { return #err("TooOld") }
-                }
-            }
-        };
-        if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
-        ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
+    //     let result = await _transferFrom(tokenCanister, msg.caller, value, tokens.getFee(tid));
+    //     let txid = switch (result) {
+    //         case (#Ok(id)) { id };
+    //         case (#Err(e)) { return #err("token transfer failed:" # tid) };
+    //         // case(#ICRCTransferError(e)) { return #err("token transfer failed:" # tid); };
+    //         case (#ICRCTransferError(e)) {
+    //             switch (e) {
+    //                 case (#BadBurn) { return #err("BadBurn") };
+    //                 case (#BadFee) { return #err("BadFee") };
+    //                 case (#CreatedInFuture) { return #err("CreatedInFuture") };
+    //                 case (#CustomError(text)) {
+    //                     return #err("CustomError: " # text)
+    //                 };
+    //                 case (#Duplicate) { return #err("Duplicate") };
+    //                 case (#Expired) { return #err("Expired") };
+    //                 case (#GenericError) { return #err("GenericError") };
+    //                 case (#InsufficientAllowance) {
+    //                     return #err("InsufficientAllowance")
+    //                 };
+    //                 case (#InsufficientFunds) {
+    //                     return #err("InsufficientFunds")
+    //                 };
+    //                 case (#TemporarilyUnavailable) {
+    //                     return #err("TemporarilyUnavailable")
+    //                 };
+    //                 case (#TooOld) { return #err("TooOld") }
+    //             }
+    //         }
+    //     };
+    //     if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
+    //     ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
 
-        txcounter += 1;
-        return #ok(txcounter - 1)
-    };
+    //     txcounter += 1;
+    //     return #ok(txcounter - 1)
+    // };
 
     private func effectiveDepositAmount(tokenId : Text, value : Nat) : Nat {
         return value
@@ -420,7 +436,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
 
         var result = (intetest / 100) * ((n +1) * X - ((decayPerDay * n * (n +1)) / 2));
 
-        if(lastUpdateTime > 0){
+        if (lastUpdateTime > 0) {
             var Y : Float = Float.fromInt(lastUpdateTime) - 1;
             result := result - (intetest / 100) * ((Y +1) * X - ((decayPerDay * Y * (Y +1)) / 2))
         };
@@ -472,8 +488,8 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         firstMultiplier : Float;
         duration : Nat;
         startTime : Time.Time;
-        // lastUpdateTime: Time.Time;
-        lastUpdateTime : Nat;
+        lastUpdateTime : Nat; // Days
+
         isActive : Bool
     };
 
@@ -482,6 +498,14 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
 
     public func updateArrayForPrincipal(userPId : Principal, newValue : Nat, newDepInform : DepositType, isCkETH : Bool) : () {
         let maybeArray = depositInfoCkETH.get(userPId);
+        // var newDepInform : DepositType = {
+        //     amount = 0;
+        //     firstMultiplier = 0;
+        //     duration = 0;
+        //     startTime = Time.now();
+        //     lastUpdateTime = 0;
+        //     isActive = false;
+        // };
         var updateInform : [DepositType] = [];
 
         switch (maybeArray) {
@@ -501,7 +525,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         }
     };
 
-    public func deposit_2(tokenId : Principal, value : Nat, duration : Nat) : async TxReceipt {
+    public func deposit(tokenId : Principal, value : Nat, duration : Nat) : async TxReceipt {
         let tid : Text = Principal.toText(tokenId);
 
         if (tokens.hasToken(tid) == false) return #err("token not exist");
@@ -540,7 +564,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
         ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
 
-        var firstNum = await getFirstMul(value, duration);
+        var firstNum = await getFirstMultiplier(value, duration);
         var newDepInform : DepositType = {
             amount = value;
             firstMultiplier = firstNum;
@@ -557,7 +581,7 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         return #ok(txcounter - 1)
     };
 
-    public func getFirstMul(value : Nat, period : Nat) : async Float {
+    public func getFirstMultiplier(value : Nat, period : Nat) : async Float {
         switch (period) {
             case (1) { return Float.fromInt(value) * 1.0006 };
             case (3) { return Float.fromInt(value) * 1.0518 };
@@ -574,7 +598,199 @@ shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal) = t
         }
     };
 
-    public func getDepositId(userId: Principal): async ?[DepositType] {
-        return depositInfoCkETH.get(userId);
+    public func getDepositId(userId : Principal) : async ?[DepositType] {
+        return depositInfoCkETH.get(userId)
     };
+
+    private var nanosecondsPerDay: Time.Time = 24 * 60 * 60 * 1_000_000_000;
+
+    public func withdrawInterest(userId : Principal, index : Nat, startTime : Time.Time) : async Float {
+        // let informArray : ?[DepositType] = depositInfoCkETH.get(userId);
+
+        var maybeArray = depositInfoCkETH.get(userId);
+
+        switch (maybeArray) {
+            case (?r) {
+                if(r.size() <= index){
+                    return 0;
+                };
+
+                var t1 = r[index].lastUpdateTime;
+                var t2 = Time.now();
+                var firstMultiplier = getFirstMultiplier;
+                var decayPerDay = getDecayPerDay();
+                // period : Nat;
+                // lastUpdateTime : Nat;
+                var canister2 = actor(canister_token_ID): actor { getValue: () -> async Nat };  
+                var updateDay = compareTimestamps(t1, t2);
+                // r[index].lastUpdateTime := updateDay;
+
+                let result : ICRC1.TransferResult = await mintVer2(userId, 1);
+                return 0
+            };
+            case (_) {
+                return 0
+            }
+        };
+
+        // Get interest: getInterest()
+        // Get compareTime: getInterest()
+        // Update
+    };
+    private func mintVer2(userId : Principal, value: Nat) : async ICRC1.TransferResult {
+
+        let acct : Account = {
+            owner = userId;
+            subaccount = null
+        };
+        let amut : Balance = value;
+        let mintParam : ICRC1.Mint = {
+            to = acct;
+            amount = amut;
+            memo = null;
+            created_at_time = null
+        };
+
+        let caller: Principal = owner_;
+        let result : ICRC1.TransferResult = await mint2(mintParam, caller);
+        return result;
+    };
+
+    public func getDecayPerDay() : async Float {
+        return 0.0119
+    };
+
+    public func getPrincipal() : async Principal {
+        return msg.caller;
+    };
+
+    public shared(msg) func inc() : async Principal {
+        return msg.caller;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////////////
+    public type Balance = Nat;
+
+    type Account = {
+        owner : Principal;
+        subaccount : ?Subaccount
+    };
+    let acct : Account = {
+        owner = owner;
+        subaccount = null
+    };
+    let init_args : ICRC1.TokenInitArgs = {
+        name = _name;
+        symbol = _symbol;
+        decimals = 8;
+        fee = 0;
+        max_supply = 1_000_000_000_000;
+        initial_balances = [(
+            acct,
+            100_000_000,
+        )];
+        min_burn_amount = 0;
+
+        minting_account = null;
+
+        advanced_settings = null
+    };
+
+    let icrc1_args : ICRC1.InitArgs = {
+        init_args with minting_account = Option.get(
+            init_args.minting_account,
+            {
+                owner = owner;
+                subaccount = null
+            },
+        )
+    };
+
+    stable let token = ICRC1.init(icrc1_args);
+
+    /// Functions for the ICRC1 token standard
+    public shared query func icrc1_name() : async Text {
+        ICRC1.name(token)
+    };
+
+    public shared query func icrc1_symbol() : async Text {
+        ICRC1.symbol(token)
+    };
+
+    public shared query func icrc1_decimals() : async Nat8 {
+        ICRC1.decimals(token)
+    };
+
+    public shared query func icrc1_fee() : async ICRC1.Balance {
+        ICRC1.fee(token)
+    };
+
+    public shared query func icrc1_metadata() : async [ICRC1.MetaDatum] {
+        ICRC1.metadata(token)
+    };
+
+    public shared query func icrc1_total_supply() : async ICRC1.Balance {
+        ICRC1.total_supply(token)
+    };
+
+    public shared query func icrc1_minting_account() : async ?ICRC1.Account {
+        ?ICRC1.minting_account(token)
+    };
+
+    public shared query func icrc1_balance_of(args : ICRC1.Account) : async ICRC1.Balance {
+        ICRC1.balance_of(token, args)
+    };
+
+    public shared query func icrc1_supported_standards() : async [ICRC1.SupportedStandard] {
+        ICRC1.supported_standards(token)
+    };
+
+    public shared ({ caller }) func icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult {
+        await* ICRC1.transfer(token, args, caller)
+    };
+
+    public shared ({ caller }) func mint(args : ICRC1.Mint) : async ICRC1.TransferResult {
+        await* ICRC1.mint(token, args, caller)
+    };
+
+    func mint2(args : ICRC1.Mint, caller: Principal) : async ICRC1.TransferResult {
+        await* ICRC1.mint2(token, args, caller)
+    };
+
+    public shared ({ caller }) func burn(args : ICRC1.BurnArgs) : async ICRC1.TransferResult {
+        await* ICRC1.burn(token, args, caller)
+    };
+
+    public shared ({ caller }) func icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult {
+        await* ICRC1.approve(token, args, caller)
+    };
+
+    public shared ({ caller }) func icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult {
+        await* ICRC1.transfer_from(token, args, caller)
+    };
+
+    public shared query func icrc2_allowance(args : ICRC1.AllowanceArgs) : async ICRC1.Allowance {
+        ICRC1.get_allowance_of(token, args.account, args.spender)
+    };
+
+    // Functions for integration with the rosetta standard
+    public shared query func get_transactions(req : ICRC1.GetTransactionsRequest) : async ICRC1.GetTransactionsResponse {
+        ICRC1.get_transactions(token, req)
+    };
+
+    // Additional functions not included in the ICRC1 standard
+    public shared func get_transaction(i : ICRC1.TxIndex) : async ?ICRC1.Transaction {
+        await* ICRC1.get_transaction(token, i)
+    };
+
+    // Deposit cycles into this canister.
+    public shared func deposit_cycles() : async () {
+        let amount = ExperimentalCycles.available();
+        let accepted = ExperimentalCycles.accept(amount);
+        assert (accepted == amount)
+    }
 }
