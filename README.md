@@ -84,12 +84,12 @@ dfx canister call token1 mint "(principal \"euhen-l7nid-hchro-ehmy2-tjuyf-omnst-
 ```
 
 ```bash
-dfx deploy --network local deposit --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id deposit)\", \"d.ckETH'\", \"d.ckETH\")"
+dfx deploy --network local deposit --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id deposit)\", \"d.ckETH'\", \"d.ckETH\", \"$(dfx canister --network local id token0)\")"
 
 dfx canister call deposit addToken "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\", \"ICRC1\")"
 
-dfx canister call token0 icrc2_approve "(record { amount = 100_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
-dfx canister call deposit deposit_2 "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1000,14)"
+dfx canister call token0 icrc2_approve "(record { amount = 1_000_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
+dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",100_000,14)"
 ## dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1000)"
 
 dfx deploy token0 --argument '( record {                      
@@ -104,7 +104,7 @@ dfx deploy token0 --argument '( record {
                   owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";   
                   subaccount = null;                          
               };
-              100_000_000
+              100_000_000_000
           }
       };
       min_burn_amount = 0;
@@ -125,7 +125,7 @@ dfx deploy token0 --argument '( record {
                   owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";   
                   subaccount = null;
                   };                                              
-              100_000_000                                     
+              100_000_000_000                                     
           }                    
       };                                                      
       min_burn_amount = 0;                                                                          
@@ -133,28 +133,3 @@ dfx deploy token0 --argument '( record {
       advanced_settings = null;
   })'
 ```
-
-
-```bash
-dfx deploy --network local deposit --argument '(record { owner_ = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae"; deposit_id = principal "bd3sg-teaaa-aaaaa-qaaba-cai"; init_args = 
-record {                      
-      name = "dChain-key Ether";                               
-      symbol = "d.ckETH";                                             
-      decimals = 8;                                                    
-      fee = 0;                                                
-      max_supply = 1_000_000_000_000;                         
-      initial_balances = vec {                                
-          record {
-              record {                                        
-                  owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";   
-                  subaccount = null;                          
-              };
-              100_000_000
-          }
-      };
-      min_burn_amount = 0;
-      minting_account = null;
-      advanced_settings = null;
-  })'
-```
-dfx deploy my_canister --argument '(record { owner_ = principal "owner-principal"; deposit_id = principal "deposit-principal"; init_args = record { name = "MyToken"; symbol = "MTK"; decimals = 8; fee = 1000000; max_supply = 1000000000; initial_balances = vec { (record { owner = principal "some-principal"; subaccount = opt vec {}; }, 1000000) }; min_burn_amount = 1000; minting_account = opt record { owner = principal "some-principal"; subaccount = opt vec {}; }; advanced_settings = opt record { ... }; }; })'
