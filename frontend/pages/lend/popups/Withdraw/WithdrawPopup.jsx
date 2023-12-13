@@ -12,8 +12,8 @@ const customStyles = {
     color: 'white',
     background: 'linear-gradient(0deg, #1C1D26, #1C1D26), linear-gradient(0deg, #2C2D3B, #2C2D3B)',
     width: '444px',
-    height: '353px',
-    top: '50%',
+    height: '631px',
+    top: '55%',
     left: '50%',
     right: 'auto',
     bottom: 'auto',
@@ -46,6 +46,57 @@ function WithdrawPopup({
         <h2 className={styles.Title}>Withdraw</h2>
       </div>
 
+      <div style={{
+        marginTop: '32px', display: 'flex', flexDirection: 'column', gap: '20px',
+      }}
+      >
+        <div style={{
+          display: 'flex', padding: '20px 0px', borderTop: '1px solid rgba(44, 45, 59, 1)', borderBottom: '1px solid rgba(44, 45, 59, 1)',
+        }}
+        >
+          <div style={{
+            width: '50%', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '16px', borderRight: '1px solid rgba(44, 45, 59, 1)',
+          }}
+          >
+            <div style={{ display: 'flex' }}>
+              <svg style={{ marginRight: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="#858697" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <div style={{ color: 'rgba(133, 134, 151, 1)' }}>UNLOCKED</div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <img style={{ marginRight: '4px' }} src="frontend/assets/ckBTC.png" width={18} height={18} alt="" />
+              <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
+                96.72
+              </div>
+            </div>
+          </div>
+          <div style={{
+            width: '50%', paddingLeft: '12px', display: 'flex', flexDirection: 'column', gap: '16px',
+          }}
+          >
+            <div style={{ display: 'flex' }}>
+              <svg style={{ marginRight: '4px' }} width="19" height="18" viewBox="0 0 19 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12.5 6H6.5M12.5 6C14.1569 6 15.5 7.34315 15.5 9V13.5C15.5 15.1569 14.1569 16.5 12.5 16.5H6.5C4.84315 16.5 3.5 15.1569 3.5 13.5V9C3.5 7.34315 4.84315 6 6.5 6M12.5 6V4.5C12.5 2.84315 11.1569 1.5 9.5 1.5C7.84315 1.5 6.5 2.84315 6.5 4.5V6M9.5 12V10.5" stroke="#858697" strokeWidth="1.3" strokeLinecap="round" />
+              </svg>
+              <div style={{ color: 'rgba(133, 134, 151, 1)' }}>LOCKED</div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <img style={{ marginRight: '4px' }} src="frontend/assets/ckBTC.png" width={18} height={18} alt="" />
+              <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
+                96.72
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{ fontSize: '14px', color: 'rgba(133, 134, 151, 1)' }}>Locked d.ckBTC will be withdrawn at 5% fee.</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <div>Locked d.ckBTC schedule</div>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12.75 7.5L9 11.25L5.25 7.5" stroke="#D9DAE8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
       <div>
         <div className={styles.LabelContainer}>
           <div className={styles.Label}>
@@ -62,7 +113,9 @@ function WithdrawPopup({
         <div className={styles.InputContainer}>
           <div className={styles.InputGroup}>
             <div className={styles.IconContainer}>
-              <span className={styles.Icon}>B</span>
+              <span className={styles.Icon}>
+                <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+              </span>
             </div>
             <input
               type="number"
@@ -78,6 +131,13 @@ function WithdrawPopup({
           <button type="button" className={styles.SelectOption}>75%</button>
           <button type="button" className={styles.SelectOption}>100%</button>
         </div>
+      </div>
+
+      <div style={{
+        color: 'rgba(133, 134, 151, 1)', fontSize: '14px', marginTop: '20px', marginBottom: '32px',
+      }}
+      >
+        d.ckBTC will be withdrawn as ckBTC 1:1 in your wallet. ckBTC does not earn yield
       </div>
 
       <button type="button" className={styles.ButtonContainer} disabled>

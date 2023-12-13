@@ -65,8 +65,10 @@
   font-weight: 400;
   line-height: 19px;
   letter-spacing: 0em;
-  text-align: left;
+  /* text-align: left; */
   color: #CCCCCC;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .Label svg {
@@ -172,13 +174,14 @@
 
 .IconContainer {
   position: absolute;
-  left: 8px;
+  left: 16px;
+  margin-top: 4px;
   z-index: 1;
 }
 
 .InputField {
   height: 60px;
-  padding: 8px 40px 8px 32px;
+  padding: 16px;
   box-sizing: border-box;
   background-color: #1C1D26;
   border: 1px solid #2C2D3B;
@@ -191,7 +194,23 @@
   line-height: 24px;
 }
 
-.InputField::placeholder {
+.InputFieldDeposit {
+  height: 60px;
+  padding: 16px;
+  padding-left: 56px;
+  box-sizing: border-box;
+  background-color: #1C1D26;
+  border: 1px solid #2C2D3B;
+  border-radius: 12px;
+  color: #858697;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.InputField::placeholder, .InputFieldDeposit::placeholder {
   color: #858697 !important;
 }
 
