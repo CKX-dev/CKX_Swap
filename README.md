@@ -90,6 +90,8 @@ dfx canister call deposit addToken "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\", 
 
 dfx canister call token0 icrc2_approve "(record { amount = 1_000_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
 dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",100_000,14)"
+
+dfx canister call deposit withdrawInterest "(0)"
 ## dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1000)"
 
 dfx deploy token0 --argument '( record {                      

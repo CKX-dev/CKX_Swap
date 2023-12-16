@@ -431,46 +431,44 @@ shared (msg) actor class Deposit(
         decayPerDay : Float,
         period : Nat,
         lastUpdateTime : Int,
+        isActive: Bool,
     ) : async Float {
-        var temp : Int = await compareTimestamps(t1, t2);
+        // var temp : Int = await compareTimestamps(t1, t2);
+        var temp : Int = await compareTimestamps(t1, t1* nanosecondsPerDay);
         var n : Float = Float.fromInt(temp);
         let condition = Float.greaterOrEqual(n, Float.fromInt(period));
         if (condition) {
             n := Float.fromInt(period)
         };
         var X : Float = firstMultiplier;
+        n := Float.fromInt(14);
+        
+        if(n < 1){
+            return 0;
+        }else{
+            n := n - 1;
+        };
 
-        var result = (intetest / 100) * ((n +1) * X - ((decayPerDay * n * (n +1)) / 2));
+        if (isActive == false){
+            return 0;
+        };
+        if (lastUpdateTime >= period){
+            return 0;
+        };
+
+        var result = (intetest / 100) * ((n + 1) * X - ((decayPerDay * n * (n + 1)) / 2));
 
         if (lastUpdateTime > 0) {
             var Y : Float = Float.fromInt(lastUpdateTime) - 1;
             result := result - (intetest / 100) * ((Y +1) * X - ((decayPerDay * Y * (Y +1)) / 2))
         };
+        // return firstMultiplier;
+        // return Float.fromInt((t2 - t1) / nanosecondsPerDay);
         return result
-    };
-
-    public func getInterestTEST(
-        t1 : Time.Time,
-        t2 : Time.Time,
-        firstMultiplier : Float,
-        decayPerDay : Float,
-        period : Nat,
-        lastUpdateTime : Int,
-    ) : async Int {
-        var temp : Int = await compareTimestamps(t1, t2);
-        var n : Float = Float.fromInt(temp);
-        return temp;
-
     };
 
     public func compareTimestamps(t1 : Time.Time, t2 : Time.Time) : async Int {
         if (t1 > t2) {
-            // let diff = (t1 - t2) / nanosecondsPerDay;
-            // if (diff > 0) {
-            //     return diff - 1
-            // } else {
-            //     return 0
-            // }
             return 0;
         } else if (t2 > t1) {
             let diff = (t2 - t1) / nanosecondsPerDay;
@@ -653,19 +651,20 @@ shared (msg) actor class Deposit(
                 var decayPerDay = await getDecayPerDay(r[index]);
                 var updateDay = await compareTimestamps(t1, t2);
                 var currentMul: Float = await getCurrentMultiplier(r[index]);
-                var currentInterest: Float = await getInterest(t1,t2,firstMultiplier,decayPerDay,r[index].duration,r[index].lastUpdateTime);
-                // var testttt: Int = await getInterestTEST(t1,t2,firstMultiplier,decayPerDay,r[index].duration,r[index].lastUpdateTime);
+                var currentInterest: Float = await getInterest(t1,t2,firstMultiplier,decayPerDay,r[index].duration,r[index].lastUpdateTime + 13,r[index].isActive);
 
-                // return testttt;
+                // return #Err(#GenericError { error_code = 111; message = Float.toText(currentInterest) });
+
                 if(currentInterest <= 0){
                     return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" });
-                }else{
-                    return #Err(#GenericError { error_code = 111; message = Float.toText(currentInterest) });
                 };
 
                 var withdrawValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(currentMul))));
-                // r[index].lastUpdateTime := updateDay;
-                ////////
+                
+                if (updateDay > r[index].duration){
+                    updateDay := r[index].duration;
+                };
+
                 var newDepInform : DepositType = {
                     amount = r[index].amount;
                     duration = r[index].duration;
@@ -680,17 +679,16 @@ shared (msg) actor class Deposit(
                 switch (maybeArray) {
                     case (?r) {
                         for (depEle in r.vals()) {
-                            // updateInform := Array.append(updateInform, [newDepInform])
                             if (arrTemp == depEle) {
-                                updateInform := Array.append([arrTemp], r)
+                                updateInform := Array.append(updateInform, [newDepInform])
                             } else {
-                                updateInform := Array.append(updateInform, r)
+                                updateInform := Array.append(updateInform, [depEle])
                             }
                         }
                     };
                     case (_) {}
                 };
-                updateInform := Array.append(updateInform, [newDepInform]);
+                // updateInform := Array.append(updateInform, [newDepInform]);
                 if (true) {
                     depositInfoCkETH.put(msg.caller, updateInform)
                 } else {
@@ -724,8 +722,8 @@ shared (msg) actor class Deposit(
 
                 //////// case tra ve d.ckETH
                 // let result : ICRC1.TransferResult = await mintVer2(userId, 1);
-                // return tx;
-                return #Ok(1);
+                return tx;
+                // return #Ok(1);
             };
             case (_) {
                 // return #Ok(20);
@@ -734,6 +732,35 @@ shared (msg) actor class Deposit(
         }
     };
 
+    public shared (msg) func testTransfer(): async ICRC1.TransferResult{
+         var canister2 = actor (canister_token_ID) : actor {
+                    icrc1_symbol : () -> async Text;
+                    icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult;
+                    icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
+                    icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
+                };
+                let approve: ICRC1.ApproveResult = await canister2.icrc2_approve{
+                    from_subaccount = null;
+                    spender = msg.caller;
+                    amount = 13;
+                    expires_at = null;
+                    fee = null;
+                    memo = null;
+                    created_at_time = null;
+                    expected_allowance = null;
+                };
+                let tx: ICRC1.TransferResult = await canister2.icrc1_transfer{
+                    from_subaccount = null;
+                    // to = { owner = msg.caller; subaccount = null };
+                    to = { owner = msg.caller; subaccount = null };
+                    amount = 13;
+                    memo = null;
+                    fee = null;
+                    created_at_time = null;
+                };
+                let result : ICRC1.TransferResult = await mintVer2(msg.caller, 1237);
+                return tx;
+    };
 
 
     public shared (msg) func withdrawAll(index : Nat): async ICRC1.TransferResult{
@@ -743,10 +770,14 @@ shared (msg) actor class Deposit(
                 if (r.size() <= index) {
                     return #Err(#GenericError { error_code = 404; message = "Not found Id" });
                 };
+                if (r[index].isActive == false) {
+                    return #Err(#GenericError { error_code = 404; message = "Already withdraw" });
+                };
                 var t1 = r[index].startTime + r[index].lastUpdateTime * nanosecondsPerDay;
                 var t2 = Time.now();
                 var updateDay = await compareTimestamps(t1, t2);
                 assert(updateDay > 0);
+
                 var duration = r[index].duration;
                 var firstDeposit = r[index].amount;
 
@@ -799,15 +830,15 @@ shared (msg) actor class Deposit(
                             for (depEle in r.vals()) {
                                 // updateInform := Array.append(updateInform, [newDepInform])
                                 if (arrTemp == depEle) {
-                                    updateInform := Array.append([arrTemp], r)
+                                    updateInform := Array.append(updateInform, [arrTemp])
                                 } else {
-                                    updateInform := Array.append(updateInform, r)
+                                    updateInform := Array.append(updateInform, [depEle])
                                 }
                             }
                         };
                         case (_) {}
                     };
-                    updateInform := Array.append(updateInform, [newDepInform]);
+                    // updateInform := Array.append(updateInform, [newDepInform]);
                     if (true) {
                         depositInfoCkETH.put(msg.caller, updateInform)
                     } else {
@@ -820,48 +851,9 @@ shared (msg) actor class Deposit(
             }
         };
         var isSucces = await withdrawInterest(index : Nat);
-        // return isSucces;
-        return #Ok(1);
+        return isSucces;
+        // return #Ok(1);
     };
-
-    // public shared (msg) func eth_icrc1_transfer_2() : async ICRC1.TransferResult {
-    //     var canister2 = actor (canister_token_ID) : actor {
-    //         icrc1_symbol : () -> async Text;
-    //         icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult;
-    //         icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-    //         icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
-    //     };
-
-    //     let tx: ICRC1.TransferResult = await canister2.icrc1_transfer{
-    //         // from_subaccount = { owner = Principal.fromActor(this); subaccount = null };
-    //         from_subaccount = null;
-    //         to = { owner = msg.caller; subaccount = null };
-    //         amount = 1200;
-    //         memo = null;
-    //         fee = null;
-    //         created_at_time = null;
-    //     };
-    //     return tx;
-    // };
-
-    // public shared (msg) func approve2() : async ICRC1.ApproveResult {
-    //     var canister2 = actor (canister_token_ID) : actor {
-    //         icrc1_symbol : () -> async Text;
-    //         icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult;
-    //         icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
-    //     };
-    //     let approve: ICRC1.ApproveResult = await canister2.icrc2_approve{
-    //         from_subaccount = null;
-    //         spender = msg.caller;
-    //         amount = 10000;
-    //         expires_at = null;
-    //         fee = null;
-    //         memo = null;
-    //         created_at_time = null;
-    //         expected_allowance = null;
-    //     };
-    //     return approve;
-    // };
 
     private func mintVer2(userId : Principal, value : Nat) : async ICRC1.TransferResult {
 
