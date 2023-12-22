@@ -28,16 +28,16 @@ npm run dev
 dfx deploy token0 --argument '( record {                      
       name = "Chain-key Ether";                               
       symbol = "ckETH";                                             
-      decimals = 8;                                                    
+      decimals = 18;                                                    
       fee = 0;                                                
-      max_supply = 1_000_000_000_000;                         
+      max_supply = 1000_000_000_000_000_000_000_000;                         
       initial_balances = vec {                                
           record {
               record {                                        
                   owner = principal "<Replace with your principal-id on front end>";   
                   subaccount = null;                          
               };
-              100_000_000
+              1000_000_000_000_000_000_000
           }
       };
       min_burn_amount = 0;
@@ -49,16 +49,16 @@ dfx deploy token0 --argument '( record {
   dfx deploy token1 --argument '( record {                      
       name = "Chain-key Bitcoin";                                                                
       symbol = "ckBTC";                                             
-      decimals = 8;                                                                                      
+      decimals = 18;                                                                                      
       fee = 0;                                                
-      max_supply = 1_000_000_000_000;                         
+      max_supply = 1000_000_000_000_000_000_000_000;                         
       initial_balances = vec {                                
           record {             
               record {                                        
                   owner = principal "<Replace with your principal-id on front end>";   
                   subaccount = null;
                   };                                              
-              100_000_000                                     
+              1000_000_000_000_000_000_000                                     
           }                    
       };                                                      
       min_burn_amount = 0;                                                                          
@@ -86,27 +86,26 @@ dfx canister call token1 mint "(principal \"euhen-l7nid-hchro-ehmy2-tjuyf-omnst-
 ```bash
 dfx deploy --network local deposit --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id deposit)\", \"d.ckETH'\", \"d.ckETH\", \"$(dfx canister --network local id token0)\")"
 
-dfx canister call deposit addToken "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\", \"ICRC1\")"
+dfx canister call deposit addToken "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\", \"ICRC2\")"
 
-dfx canister call token0 icrc2_approve "(record { amount = 1_000_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
-dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",100_000,14)"
+dfx canister call token0 icrc2_approve "(record { amount = 1_000_000_000_000_000_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
+dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1_000_000_000_000_000,14)"
 
 dfx canister call deposit withdrawInterest "(0)"
-## dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1000)"
 
 dfx deploy token0 --argument '( record {                      
       name = "Chain-key Ether";                               
       symbol = "ckETH";                                             
-      decimals = 8;                                                    
+      decimals = 18;                                                    
       fee = 0;                                                
-      max_supply = 1_000_000_000_000;                         
+      max_supply = 1000_000_000_000_000_000_000_000;                         
       initial_balances = vec {                                
           record {
               record {                                        
                   owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";   
                   subaccount = null;                          
               };
-              100_000_000_000
+              1000_000_000_000_000_000_000
           }
       };
       min_burn_amount = 0;
@@ -118,20 +117,24 @@ dfx deploy token0 --argument '( record {
   dfx deploy token1 --argument '( record {                      
       name = "Chain-key Bitcoin";                                                                
       symbol = "ckBTC";                                             
-      decimals = 8;                                                                                      
+      decimals = 18;                                                                                      
       fee = 0;                                                
-      max_supply = 1_000_000_000_000;                         
+      max_supply = 1000_000_000_000_000_000_000_000;                         
       initial_balances = vec {                                
           record {             
               record {                                        
                   owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";   
                   subaccount = null;
                   };                                              
-              100_000_000_000                                     
+              1000_000_000_000_000_000_000                                     
           }                    
       };                                                      
       min_burn_amount = 0;                                                                          
       minting_account = null; 
       advanced_settings = null;
   })'
+
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "37her-33fjq-rfwha-qivgx-d6vla-k5m2i-h2g4r-nblsc-6adue-7bn7m-sae"}; amount= 1_000_000_000_000_000 })'
+
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "53htl-env4y-cphkw-rtzc2-hirv4-4dxno-6wai5-puaxk-iuqqp-tzsq6-2ae"}; amount= 1_000_000_000_000_000 })'
 ```

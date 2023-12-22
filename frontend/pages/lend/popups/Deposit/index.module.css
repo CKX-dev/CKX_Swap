@@ -181,6 +181,10 @@
 
 .InputField {
   height: 60px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
   padding: 16px;
   box-sizing: border-box;
   background-color: #1C1D26;
@@ -197,7 +201,7 @@
 .InputFieldDeposit {
   height: 60px;
   padding: 16px;
-  padding-left: 56px;
+  padding-left: 48px;
   box-sizing: border-box;
   background-color: #1C1D26;
   border: 1px solid #2C2D3B;
@@ -208,6 +212,7 @@
   font-weight: 500;
   font-size: 18px;
   line-height: 24px;
+  position: relative;
 }
 
 .InputField::placeholder, .InputFieldDeposit::placeholder {
@@ -222,4 +227,60 @@
   padding: 0;
   background-color: #3C3C48;
   color: #CCCCCC;
+  /* z-index: 2; */
+}
+
+.SelectDuration{
+  position: absolute;
+  left: 8px;
+  top: 80px;
+  width: 60px;
+  height: 25px;
+  padding: 0;
+  background-color: #3C3C48;
+  color: #CCCCCC;
+  width: 100%;
+}
+
+.SelectOption{
+  background-color: #3C3C48;
+  color: #CCCCCC;
+  width: 100%;
+}
+
+.DropDownDuration{
+  position: absolute;
+  left: 8px;
+  /* top: 28px; */
+  cursor: pointer;
+}
+
+.DropDownElements{
+  position: absolute;
+  width: 100%;
+  background-color: #1C1D26;
+  top: 80px;
+  height: 111px;
+  overflow: scroll;
+}
+
+.DropDownElements > button{
+  width: 100%;
+  background-color: #1C1D26;
+  height: 37px;
+  /* border-radius: 12px; */
+  display: flex;
+  justify-content: center;
+  border: 0.5px solid #2C2D3B;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.DropDownElements > button:hover{
+  background-color: #2C2D3B;
+}
+
+.DropDownElements > button > p{
+  align-self: center;
 }

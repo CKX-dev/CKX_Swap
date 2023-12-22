@@ -172,13 +172,20 @@
 
 .IconContainer {
   position: absolute;
-  left: 8px;
+  left: 24px;
   z-index: 1;
+}
+
+.LockContainer{
+  position: absolute;
+  right: 18px;
+  z-index: 1;
+  display: flex;
 }
 
 .InputField {
   height: 60px;
-  padding: 8px 40px 8px 32px;
+  padding: 8px 52px 8px 58px;
   box-sizing: border-box;
   background-color: #1C1D26;
   border: 1px solid #2C2D3B;
@@ -203,4 +210,113 @@
   padding: 0;
   background-color: #3C3C48;
   color: #CCCCCC;
+}
+
+.HeaderLendTable > th{
+  color: rgba(204, 204, 204, 1);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.HeaderTable {
+  border-top: 1px solid rgba(44, 45, 59, 1);
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+}
+
+.TableContainer{
+  height: 85px;
+  overflow: scroll;
+}
+
+.LendTable {
+  font-family: Arial, sans-serif;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.LendTable th, .LendTable td {
+  padding: 6px 6px 6px 6px;
+  text-align: center;
+  width: 33%;
+}
+
+.LendTable td {
+  /* border-bottom: 1px solid #ddd; */
+}
+
+.LendTable tbody {
+  text-align: center;
+  color: rgba(133, 134, 151, 1);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.LendTable tr:last-child td {
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+}
+
+.LendTable th:last-child,
+.LendTable td:last-child {
+  border-right: 1px solid rgba(44, 45, 59, 1);
+}
+
+.tableSecondChild {
+  border-right: 1px solid rgba(44, 45, 59, 1);
+  border-left: 1px solid rgba(44, 45, 59, 1);
+}
+
+.LendTable th:first-child,
+.LendTable td:first-child {
+  border-left: 1px solid rgba(44, 45, 59, 1);
+}
+
+.relativeDropdown{
+  position: relative;
+  padding: 0px;
+  margin: 0px;
+  background-color: rgba(28, 29, 38, 1);
+}
+
+.clearButtonCss{
+  margin: 0;
+  padding: 0;
+  background-color: rgba(28, 29, 38, 1);
+  width: 100%;
+}
+
+.optionDropdown {
+  position: absolute;
+  background-color: rgba(28, 29, 38, 1);
+  top: 24px;
+  right: 0px;
+  /* border: 1px solid rgba(44, 45, 59, 1); */
+}
+
+.optionDropdown > button{
+  padding: 8px 12px 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 1);
+  display: flex;
+}
+
+.optionDropdown > button > div{
+  padding: 8px 12px 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 1);
+  display: flex;
+}
+
+.optionDropdown > button:hover {
+  background-color: rgba(35, 37, 52, 1);
+  padding: 8px 12px 8px 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  color: rgba(255, 255, 255, 1);
+  display: flex;
+}
+
+.selectedRow {
+  background-color: #232534;
 }

@@ -3,7 +3,9 @@ import Modal from 'react-modal';
 
 import PropTypes from 'prop-types';
 
+import { toast } from 'react-toastify';
 import styles from './index.module.css';
+import { useAuth } from '../../../../hooks/use-auth-client';
 
 Modal.setAppElement('#root');
 
@@ -12,7 +14,7 @@ const customStyles = {
     color: 'white',
     background: 'linear-gradient(0deg, #1C1D26, #1C1D26), linear-gradient(0deg, #2C2D3B, #2C2D3B)',
     width: '324px',
-    height: '182px',
+    height: '222px',
     top: '50%',
     left: '50%',
     right: 'auto',
@@ -30,7 +32,41 @@ const customStyles = {
 function SupplyPopup({
   isClaimOpen,
   closeClaim,
+  value,
 }) {
+  const { depositActor, principal } = useAuth();
+
+  const [loading, setLoading] = React.useState(false);
+
+  const closeModal = () => {
+    closeClaim();
+    setLoading(false);
+  };
+  const withdrawAllInterest = async () => {
+    // withdrawInterestAll
+    if (principal) {
+      try {
+        setLoading(true);
+        const tx = await depositActor.withdrawInterestAll();
+        if ('Ok' in tx) {
+          toast.success('Claim successfull');
+          closeModal();
+          setLoading(false);
+        } else {
+          console.log('Claim: ', tx);
+          toast.error('Claim failed');
+          closeModal();
+          setLoading(false);
+        }
+      } catch (error) {
+        console.log('Error in Claim: ', error);
+        toast.error('Claim error');
+        closeModal();
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <Modal
       isOpen={isClaimOpen}
@@ -39,14 +75,26 @@ function SupplyPopup({
     >
 
       <div>
-        <div style={{ textAlign: 'center', fontWeight: 500 }}>I confirm claiming of 0.29 ckBTC</div>
+        <div style={{ textAlign: 'center', fontWeight: 500 }}>
+          I confirm claiming of
+          {' '}
+          {value}
+          {' '}
+          ckETH
+        </div>
       </div>
 
-      <button type="button" className={styles.ButtonContainer} style={{ marginBottom: '8px', marginTop: '44px' }} disabled>
-        Claim
+      <button
+        type="button"
+        className={styles.ButtonContainer}
+        style={{ marginBottom: '8px', marginTop: '44px' }}
+        disabled={loading}
+        onClick={withdrawAllInterest}
+      >
+        {loading ? 'Loading...' : 'Claim'}
         <div className={styles.Ellipse} />
       </button>
-      <div
+      <button
         type="button"
         style={{
           color: 'rgba(133, 134, 151, 1)',
@@ -57,10 +105,10 @@ function SupplyPopup({
           width: '100%',
           padding: '0',
         }}
-        disabled
+        onClick={closeClaim}
       >
         Cancel
-      </div>
+      </button>
     </Modal>
   );
 }
@@ -68,6 +116,11 @@ function SupplyPopup({
 SupplyPopup.propTypes = {
   isClaimOpen: PropTypes.bool.isRequired,
   closeClaim: PropTypes.func.isRequired,
+  value: PropTypes.number,
+};
+
+SupplyPopup.defaultProps = {
+  value: 0,
 };
 
 export default SupplyPopup;

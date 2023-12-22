@@ -1,15 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DepositPopup from './popups/Deposit/DepositPopup';
 import WithdrawPopup from './popups/Withdraw/WithdrawPopup';
 import ClaimPopup from './popups/Claim/ClaimPopup';
 import styles from './index.module.css';
 import BottomLend from './BottomLend';
 
+import { useAuth } from '../../hooks/use-auth-client';
+
 function LendPage() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [switchPage, setSwitchPage] = useState('ckETH');
+  const [lockedckETH, setLockedckETH] = useState(0);
+
+  const { depositActor, principal } = useAuth();
 
   const openDepositModal = () => {
     setIsDepositModalOpen(true);
@@ -34,20 +39,89 @@ function LendPage() {
   const closeClaim = () => {
     setIsClaimOpen(false);
   };
+  console.log('rerender');
+  const [wrapBalance, setWrapBalance] = useState();
+  const [tokenBalance, setTokenBalance] = useState();
+  const [interest, setInterest] = useState();
+  const [decimals, setDecimals] = useState();
+
+  useEffect(() => {
+    const getBalanceUI = async () => {
+      if (principal) {
+        try {
+          const tx = await depositActor.getTokenBalance(principal);
+          setTokenBalance(Number(tx));
+          const tx2 = await depositActor.getWrapBalance(principal);
+          setWrapBalance(Number(tx2));
+          const tx3 = await depositActor.getInterestUI(principal);
+          setInterest(Number(tx3));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+    getBalanceUI();
+  }, [principal, depositActor]);
+
+  useEffect(() => {
+    const getDeposit = async () => {
+      if (principal && decimals) {
+        const tx = await depositActor.getDepositId(principal);
+
+        const fetchCurrentWrap = async (depositType) => {
+          const rt = await depositActor.getCurrentMultiplier(depositType);
+          return rt;
+        };
+        const originalList = tx[0];
+
+        if (originalList) {
+          let totalWrap = 0;
+          const idPromises = originalList.forEach(async (item) => {
+            const value = await fetchCurrentWrap(item);
+            const wrapValue = Number(value) / 10 ** decimals;
+            totalWrap += Number(wrapValue);
+            setLockedckETH(totalWrap.toFixed(6));
+          });
+          await Promise.all(idPromises);
+        }
+      }
+    };
+    getDeposit();
+  }, [principal, decimals, depositActor]);
+
+  useEffect(() => {
+    const getDecimal = async () => {
+      if (depositActor) {
+        try {
+          const tx = await depositActor.getTokenDecimals();
+          setDecimals(Number(tx));
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    };
+    getDecimal();
+  }, [depositActor]);
 
   return (
     <div>
       <DepositPopup
         isDepositModalOpen={isDepositModalOpen}
         closeDepositModal={closeDepositModal}
+        decimals={decimals}
+        tokenBalance={tokenBalance}
       />
       <WithdrawPopup
         isWithdrawModalOpen={isWithdrawModalOpen}
         closeWithdrawModal={closeWithdrawModal}
+        decimals={decimals}
+        wrapBalance={wrapBalance}
       />
       <ClaimPopup
         isClaimOpen={isClaimOpen}
         closeClaim={closeClaim}
+        decimals={decimals}
+        value={(interest / 10 ** decimals).toFixed(6)}
       />
       <div className={styles.Container}>
         <div className={styles.Header}>
@@ -80,12 +154,17 @@ function LendPage() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ lineHeight: '24px', fontSize: '14px' }}>AVAILABLE</div>
-                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0.39</div>
+                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>???</div>
               </div>
             </div>
             <div className={styles.DepositBottom}>
               <div className={styles.TextTitle}>AVAILABLE FOR DEPOSIT</div>
-              <div className={styles.TextTContent}>0.29 d.ckETH</div>
+              {tokenBalance && decimals ? (
+                <div className={styles.TextTContent}>
+                  {tokenBalance / (10 ** decimals)}
+                </div>
+              )
+                : <div className={styles.TextTContent}>0</div>}
             </div>
             <button type="button" className={styles.ButtonContainer} onClick={openDepositModal}>
               Deposit
@@ -100,12 +179,16 @@ function LendPage() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ lineHeight: '24px', fontSize: '14px' }}>AVAILABLE</div>
-                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0.29</div>
+                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{(wrapBalance / 10 ** decimals) || 0}</div>
               </div>
             </div>
             <div className={styles.WithdrawBottom}>
               <div className={styles.TextTitle}>LOCKED</div>
-              <div className={styles.TextTContent}>0.48 d.ckETH</div>
+              <div className={styles.TextTContent}>
+                {lockedckETH}
+                {' '}
+                d.ckETH
+              </div>
             </div>
             <button type="button" className={styles.ButtonContainer} onClick={openWithdrawModal}>
               Withdraw
@@ -120,7 +203,8 @@ function LendPage() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ lineHeight: '24px', fontSize: '14px' }}>$0.29</div>
-                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0.29</div>
+                {interest ? <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{(interest / 10 ** decimals).toFixed(6)}</div>
+                  : <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0</div>}
               </div>
             </div>
             <div className={styles.ClaimBottom}>

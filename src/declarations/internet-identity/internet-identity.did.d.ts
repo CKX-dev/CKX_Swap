@@ -50,6 +50,8 @@ export interface BufferedArchiveEntry {
   'anchor_number' : UserNumber,
   'timestamp' : Timestamp,
 }
+export type CaptchaCreateResponse = { 'ok' : Challenge };
+export type CaptchaResult = ChallengeResult;
 export interface Challenge {
   'png_base64' : string,
   'challenge_key' : ChallengeKey,
@@ -96,6 +98,15 @@ export interface DeviceWithUsage {
 export type FrontendHostname = string;
 export type GetDelegationResponse = { 'no_such_delegation' : null } |
   { 'signed_delegation' : SignedDelegation };
+export type GetIdAliasError = { 'NoSuchCredentials' : string } |
+  { 'AuthenticationFailed' : string };
+export interface GetIdAliasRequest {
+  'rp_id_alias_jwt' : string,
+  'issuer' : FrontendHostname,
+  'issuer_id_alias_jwt' : string,
+  'relying_party' : FrontendHostname,
+  'identity_number' : IdentityNumber,
+}
 export type HeaderField = [string, string];
 export interface HttpRequest {
   'url' : string,
@@ -111,6 +122,10 @@ export interface HttpResponse {
   'streaming_strategy' : [] | [StreamingStrategy],
   'status_code' : number,
 }
+export interface IdAliasCredentials {
+  'rp_id_alias_credential' : SignedIdAlias,
+  'issuer_id_alias_credential' : SignedIdAlias,
+}
 export interface IdentityAnchorInfo {
   'devices' : Array<DeviceWithUsage>,
   'device_registration' : [] | [DeviceRegistrationInfo],
@@ -123,6 +138,10 @@ export interface IdentityInfo {
 export type IdentityInfoResponse = { 'ok' : IdentityInfo };
 export type IdentityMetadataReplaceResponse = { 'ok' : null };
 export type IdentityNumber = bigint;
+export type IdentityRegisterResponse = { 'ok' : IdentityNumber } |
+  { 'invalid_metadata' : string } |
+  { 'bad_captcha' : null } |
+  { 'canister_full' : null };
 export interface InternetIdentityInit {
   'max_num_latest_delegation_origins' : [] | [bigint],
   'assigned_user_number_range' : [] | [[bigint, bigint]],
@@ -153,6 +172,17 @@ export type MetadataMap = Array<
       { 'bytes' : Uint8Array | number[] },
   ]
 >;
+export type PrepareIdAliasError = { 'AuthenticationFailed' : string };
+export interface PrepareIdAliasRequest {
+  'issuer' : FrontendHostname,
+  'relying_party' : FrontendHostname,
+  'identity_number' : IdentityNumber,
+}
+export interface PreparedIdAlias {
+  'rp_id_alias_jwt' : string,
+  'issuer_id_alias_jwt' : string,
+  'canister_sig_pk_der' : PublicKey,
+}
 export type PublicKey = Uint8Array | number[];
 export interface PublicKeyAuthn { 'pubkey' : PublicKey }
 export type Purpose = { 'authentication' : null } |
@@ -168,6 +198,11 @@ export type SessionKey = PublicKey;
 export interface SignedDelegation {
   'signature' : Uint8Array | number[],
   'delegation' : Delegation,
+}
+export interface SignedIdAlias {
+  'credential_jws' : string,
+  'id_alias' : Principal,
+  'id_dapp' : Principal,
 }
 export interface StreamingCallbackHttpResponse {
   'token' : [] | [Token],
@@ -209,6 +244,7 @@ export interface _SERVICE {
     [IdentityNumber, PublicKey],
     [] | [AuthnMethodRemoveResponse]
   >,
+  'captcha_create' : ActorMethod<[], [] | [CaptchaCreateResponse]>,
   'create_challenge' : ActorMethod<[], Challenge>,
   'deploy_archive' : ActorMethod<[Uint8Array | number[]], DeployArchiveResult>,
   'enter_device_registration_mode' : ActorMethod<[UserNumber], Timestamp>,
@@ -220,6 +256,11 @@ export interface _SERVICE {
     [UserNumber, FrontendHostname, SessionKey, Timestamp],
     GetDelegationResponse
   >,
+  'get_id_alias' : ActorMethod<
+    [GetIdAliasRequest],
+    { 'Ok' : IdAliasCredentials } |
+      { 'Err' : GetIdAliasError }
+  >,
   'get_principal' : ActorMethod<[UserNumber, FrontendHostname], Principal>,
   'http_request' : ActorMethod<[HttpRequest], HttpResponse>,
   'http_request_update' : ActorMethod<[HttpRequest], HttpResponse>,
@@ -228,11 +269,20 @@ export interface _SERVICE {
     [IdentityNumber, MetadataMap],
     [] | [IdentityMetadataReplaceResponse]
   >,
+  'identity_register' : ActorMethod<
+    [AuthnMethodData, CaptchaResult, [] | [Principal]],
+    [] | [IdentityRegisterResponse]
+  >,
   'init_salt' : ActorMethod<[], undefined>,
   'lookup' : ActorMethod<[UserNumber], Array<DeviceData>>,
   'prepare_delegation' : ActorMethod<
     [UserNumber, FrontendHostname, SessionKey, [] | [bigint]],
     [UserKey, Timestamp]
+  >,
+  'prepare_id_alias' : ActorMethod<
+    [PrepareIdAliasRequest],
+    { 'Ok' : PreparedIdAlias } |
+      { 'Err' : PrepareIdAliasError }
   >,
   'register' : ActorMethod<
     [DeviceData, ChallengeResult, [] | [Principal]],

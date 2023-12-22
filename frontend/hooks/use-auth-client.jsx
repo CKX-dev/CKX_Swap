@@ -11,6 +11,7 @@ import { AuthClient } from '@dfinity/auth-client';
 import * as swap from '../../src/declarations/swap';
 import * as token0 from '../../src/declarations/token0';
 import * as token1 from '../../src/declarations/token1';
+import * as deposit from '../../src/declarations/deposit';
 
 const AuthContext = createContext();
 
@@ -50,6 +51,7 @@ export const useAuthClient = (options = defaultOptions) => {
   const [swapActor, setSwapActor] = useState(null);
   const [token0Actor, setToken0Actor] = useState(null);
   const [token1Actor, setToken1Actor] = useState(null);
+  const [depositActor, setDepositActor] = useState(null);
 
   useEffect(() => {
     // Initialize AuthClient
@@ -102,6 +104,14 @@ export const useAuthClient = (options = defaultOptions) => {
     });
 
     setToken1Actor(token1ActorRes);
+
+    const depositActorRes = deposit.createActor(deposit.canisterId, {
+      agentOptions: {
+        identity: identityRes,
+      },
+    });
+
+    setDepositActor(depositActorRes);
   }
 
   async function logout() {
@@ -119,6 +129,7 @@ export const useAuthClient = (options = defaultOptions) => {
     swapActor,
     token0Actor,
     token1Actor,
+    depositActor,
   };
 };
 
