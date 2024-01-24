@@ -178,7 +178,7 @@
 
 .InputField {
   height: 60px;
-  padding: 8px 40px 8px 32px;
+  padding: 8px 40px 8px 52px;
   box-sizing: border-box;
   background-color: #1C1D26;
   border: 1px solid #2C2D3B;
@@ -203,4 +203,22 @@
   padding: 0;
   background-color: #3C3C48;
   color: #CCCCCC;
+}
+
+.selectTable {
+  position: absolute;
+  padding: 0;
+  background-color: #232534;
+  border-radius: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.hoverSelect:hover {
+  background-color: #858697;
+}
+
+.hoverSelect {
+  padding: 4px 8px;
+  border-radius: 4px;
 }

@@ -4,7 +4,7 @@ import Modal from 'react-modal';
 import PropTypes from 'prop-types';
 
 import { toast } from 'react-toastify';
-// import { Principal } from '@dfinity/principal';
+import { Principal } from '@dfinity/principal';
 
 import styles from './index.module.css';
 
@@ -12,6 +12,7 @@ import { useAuth } from '../../../../hooks/use-auth-client';
 
 // import * as deposit from '../../../../../src/declarations/deposit';
 // import * as token0 from '../../../../../src/declarations/token0';
+import * as deposit from '../../../../../src/declarations/deposit';
 
 Modal.setAppElement('#root');
 
@@ -40,8 +41,11 @@ function WithdrawPopup({
   closeWithdrawModal,
   decimals,
   wrapBalance,
+  setUpdateUI,
 }) {
-  const { depositActor, principal } = useAuth();
+  const {
+    depositActor, principal,
+  } = useAuth();
 
   const [dropdownLock, setDropdownLock] = useState(false);
   const [totalSelected, setTotalSelected] = useState(false);
@@ -51,8 +55,9 @@ function WithdrawPopup({
   const [depositInfo, setDepositInfo] = useState([]);
 
   const [loading, setLoading] = useState(false);
-  const [failList, setFailList] = useState([]);
+  // const [failList, setFailList] = useState([]);
 
+  console.log(selectedRows);
   const closeModal = () => {
     closeWithdrawModal();
     setDepositInfo([]);
@@ -60,6 +65,7 @@ function WithdrawPopup({
     setLock('locked');
     setDropdownLock(false);
     setLoading(false);
+    setInputBalance(0);
   };
 
   useEffect(() => {
@@ -165,37 +171,23 @@ function WithdrawPopup({
     if (decimals && principal) {
       try {
         setLoading(true);
-        const idPromises = selectedRows.map(async (idx) => {
-          const tx = await depositActor.withdrawDepositAndInterest(
-            idx,
-          );
-          if ('Ok' in tx) {
-            setFailList((prevList) => [...prevList]);
-            const newSelectedRows = selectedRows.map((number) => number - 1);
-            setSelectedRows(newSelectedRows);
-            return 1;
-          }
-          setFailList((prevList) => [...prevList, idx]);
-          const newSelectedRows = selectedRows.map((number) => number - 1);
-          setSelectedRows(newSelectedRows);
-          return 0;
-        });
-        await Promise.all(idPromises).then(
-          () => {
-            if (!failList.length) {
-              toast.success('Withdraw successfull');
-              setFailList([]);
-              setLoading(false);
-              closeModal();
-            } else {
-              console.log('Withdraw failed: ');
-              toast.error(`Withdraw failed at index ${failList.map((idx) => Number(idx))}`);
-              setFailList([]);
-              setLoading(false);
-              closeModal();
-            }
-          },
+
+        const tx = await depositActor.withdrawDepositAndInterestArray(
+          selectedRows,
         );
+        if (!tx.length) {
+          toast.success('Withdraw successfull');
+          // setFailList([]);
+          setLoading(false);
+          closeModal();
+          setUpdateUI((prev) => !prev);
+        } else {
+          console.log('Withdraw failed: ');
+          toast.error(`Withdraw failed at index ${tx.map((idx) => Number(idx))}`);
+          // setFailList([]);
+          setLoading(false);
+          closeModal();
+        }
       } catch (error) {
         console.log('Error in Withdraw: ', error);
         toast.error('Withdraw error');
@@ -209,13 +201,28 @@ function WithdrawPopup({
     if (decimals && principal) {
       try {
         setLoading(true);
+        const record = {
+          fee: [],
+          memo: [],
+          from_subaccount: [],
+          created_at_time: [],
+          amount: Number(inputBalance) * 10 ** decimals,
+          expected_allowance: [],
+          expires_at: [],
+          spender: Principal.fromText(deposit.canisterId),
+        };
+        console.log(Number(inputBalance) * 10 ** decimals);
+        const tx0 = await depositActor.icrc2_approve(record);
+        console.log('Approve: ', tx0);
+
         const tx = await depositActor.unWrapToken(
-          inputBalance * 10 ** decimals,
+          Number(inputBalance) * 10 ** decimals,
         );
-        if ('ok' in tx) {
+        if ('Ok' in tx) {
           toast.success('Convert successfull');
           closeModal();
           setLoading(false);
+          setUpdateUI((prev) => !prev);
         } else {
           console.log('Convert: ', tx);
           toast.error('Convert failed');
@@ -223,13 +230,21 @@ function WithdrawPopup({
           setLoading(false);
         }
       } catch (error) {
-        console.log('Error in Withdraw: ', error);
-        toast.error('Withdraw error');
+        console.log('Error in Convert: ', error);
+        toast.error('Convert error');
         closeModal();
         setLoading(false);
       }
     }
   };
+
+  // const isDone = (timeStamp, duration) => {
+  //   console.log('Is done: ', (Date.now() * 10 ** 6 - timeStamp) > duration * 60 * 1_000_000_000);
+  //   return (Number((Date.now()) * 10 ** 6 - Number(timeStamp))
+  //   > Number(duration) * 60 * 1000000000);
+  // };
+
+  console.log('Check deposit In4: ', depositInfo);
   return (
     <Modal
       isOpen={isWithdrawModalOpen}
@@ -298,7 +313,7 @@ function WithdrawPopup({
               <div style={{ color: 'rgba(133, 134, 151, 1)' }}>BALANCE</div>
             </div>
             <div style={{ display: 'flex' }}>
-              <img style={{ marginRight: '4px' }} src="frontend/assets/ckETH.png" width={18} height={18} alt="" />
+              <img style={{ marginRight: '4px' }} src="frontend/assets/d.ckETH.png" width={18} height={18} alt="" />
               <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
                 {wrapBalance / 10 ** 18}
               </div>
@@ -311,248 +326,263 @@ function WithdrawPopup({
           {lock === 'unLocked' && <div>UnLocked d.ckETH schedule</div>}
           {lock === 'balance' && <div />}
           {lock !== 'balance' && (
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12.75 7.5L9 11.25L5.25 7.5" stroke="#D9DAE8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12.75 7.5L9 11.25L5.25 7.5" stroke="#D9DAE8" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           )}
         </div>
         {lock !== 'balance' && (
-        <div className={styles.TableContainer}>
-          <table className={styles.LendTable}>
-            <thead className={styles.HeaderTable}>
-              <tr className={styles.HeaderLendTable}>
-                <th>d.ckETH value</th>
-                <th className={styles.tableSecondChild}>Initial ckETH amount</th>
-                <th>Locked till (Days remaining)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {depositInfo && decimals
-                && Array.from({ length: depositInfo.length }).map((_, index) => {
-                  const id = index;
-                  if (lock === 'locked' && calculateNextXDays(Number(depositInfo[index].duration)) !== calculateNextXDays(0)) {
-                    return (
-                      <tr
-                        key={id}
-                        onClick={() => handleRowClick(index)}
-                        className={selectedRows.includes(index) ? styles.selectedRow : ''}
-                      >
-                        <td>{Number(depositInfo[index].currentWrap) / (10 ** decimals)}</td>
-                        <td>{Number(depositInfo[index].amount) / (10 ** decimals)}</td>
-                        <td>
-                          {calculateNextXDays(Number(depositInfo[index].duration)
-                          - Number(depositInfo[index].lastUpdateTime))}
-                          {' '}
-                          (
-                          {Number(depositInfo[index].duration)
-                          - Number(depositInfo[index].lastUpdateTime)}
-                          )
-                        </td>
-                      </tr>
-                    );
-                  } if (lock === 'unLocked' && calculateNextXDays(Number(depositInfo[index].duration)) === calculateNextXDays(0)) {
-                    return (
-                      <tr
-                        key={id}
-                        onClick={() => handleRowClick(index)}
-                        className={selectedRows.includes(index) ? styles.selectedRow : ''}
-                      >
-                        <td>{Number(depositInfo[index].currentWrap) / (10 ** decimals)}</td>
-                        <td>{Number(depositInfo[index].amount) / (10 ** decimals)}</td>
-                        <td>
-                          {calculateNextXDays(Number(depositInfo[index].duration)
-                          - Number(depositInfo[index].lastUpdateTime))}
-                        </td>
-                      </tr>
-                    );
-                  }
-                  return <div />;
-                })}
-            </tbody>
-          </table>
-        </div>
+          <div className={styles.TableContainer}>
+            <table className={styles.LendTable}>
+              <thead className={styles.HeaderTable}>
+                <tr className={styles.HeaderLendTable}>
+                  <th>d.ckETH value</th>
+                  <th className={styles.tableSecondChild}>Initial ckETH amount</th>
+                  <th>Locked till (Days remaining)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {depositInfo && decimals
+                  && Array.from({ length: depositInfo.length }).map((_, index) => {
+                    const { id } = depositInfo[index];
+                    // if (lock === 'locked'
+                    //   && calculateNextXDays(Number(depositInfo[id].duration))
+                    //   !== calculateNextXDays(0)
+                    //   && depositInfo[id].isActive) {
+                    if (lock === 'locked' && depositInfo[id]
+                      // && !isDone(depositInfo[id].startTime, depositInfo[id].duration)
+                      && !(Number((Date.now()) * 10 ** 6 - Number(depositInfo[id].startTime))
+                      > Number(depositInfo[id].duration) * 65 * 1000000000)
+                      && depositInfo[id].isActive) {
+                      return (
+                        <tr
+                          key={id}
+                          onClick={() => handleRowClick(id)}
+                          className={selectedRows.includes(id) ? styles.selectedRow : ''}
+                        >
+                          <td>{Number(depositInfo[id].currentWrap) / (10 ** decimals)}</td>
+                          <td>{Number(depositInfo[id].amount) / (10 ** decimals)}</td>
+                          <td>
+                            {calculateNextXDays(Number(depositInfo[id].duration)
+                              - Number(depositInfo[id].lastUpdateTime))}
+                            {' '}
+                            (
+                            {Number(depositInfo[id].duration)
+                              - Number(depositInfo[id].lastUpdateTime)}
+                            )
+                          </td>
+                        </tr>
+                      );
+                    }
+                    if (lock === 'unLocked' && depositInfo[id]
+                      // && calculateNextXDays(Number(depositInfo[id].duration))
+                      // === calculateNextXDays(0) && depositInfo[id]
+                      // && isDone(depositInfo[id].startTime, depositInfo[id].duration)
+                      && (Number((Date.now()) * 10 ** 6 - Number(depositInfo[id].startTime))
+                      > Number(depositInfo[id].duration) * 65 * 1000000000)
+                      && depositInfo[id].isActive) {
+                      return (
+                        <tr
+                          key={id}
+                          onClick={() => handleRowClick(id)}
+                          className={selectedRows.includes(id) ? styles.selectedRow : ''}
+                        >
+                          <td>{Number(depositInfo[id].currentWrap) / (10 ** decimals)}</td>
+                          <td>{Number(depositInfo[id].amount) / (10 ** decimals)}</td>
+                          <td>
+                            {calculateNextXDays(Number(depositInfo[id].duration)
+                              - Number(depositInfo[id].lastUpdateTime))}
+                          </td>
+                        </tr>
+                      );
+                    }
+                    return <div />;
+                  })}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
       <div>
         {lock === 'balance' && (
-        <div className={styles.LabelContainer}>
-          <div className={styles.Label}>
-            Select amount
-          </div>
+          <div className={styles.LabelContainer}>
+            <div className={styles.Label}>
+              Select amount
+            </div>
 
-          <div className={styles.RightLabel}>
-            Balance:
-            {' '}
-            {wrapBalance / 10 ** 18 || 0}
+            <div className={styles.RightLabel}>
+              Balance:
+              {' '}
+              {wrapBalance / 10 ** 18 || 0}
+            </div>
           </div>
-        </div>
         )}
 
         {lock === 'unLocked' && (
-        <div className={styles.InputContainer}>
-          <div className={styles.InputGroup}>
-            <div className={styles.IconContainer}>
-              <span className={styles.Icon}>
-                <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
-              </span>
-            </div>
-            <input
-              type="number"
-              className={styles.InputField}
-              placeholder=""
-              disabled
-              value={totalSelected}
-            />
-            <div className={styles.LockContainer}>
-              <div>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+          <div className={styles.InputContainer}>
+            <div className={styles.InputGroup}>
+              <div className={styles.IconContainer}>
+                <span className={styles.Icon}>
+                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                </span>
               </div>
-              <div>
-                <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+              <input
+                type="number"
+                className={styles.InputField}
+                placeholder=""
+                disabled
+                value={totalSelected}
+              />
+              <div className={styles.LockContainer}>
+                <div>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                </button>
-                {dropdownLock && (
-                <div className={styles.optionDropdown}>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                    <div>Locked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div>Unlocked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
-                    <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
-                      <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
-                    </svg>
-                    <div>Balance</div>
-                  </button>
                 </div>
-                )}
+                <div>
+                  <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+                    </svg>
+                  </button>
+                  {dropdownLock && (
+                    <div className={styles.optionDropdown}>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        <div>Locked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div>Unlocked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
+                        <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
+                          <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
+                        </svg>
+                        <div>Balance</div>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         )}
 
         {lock === 'locked' && (
-        <div className={styles.InputContainer}>
-          <div className={styles.InputGroup}>
-            <div className={styles.IconContainer}>
-              <span className={styles.Icon}>
-                <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
-              </span>
-            </div>
-            <input
-              type="number"
-              className={styles.InputField}
-              placeholder=""
-              disabled
-              value={totalSelected}
-            />
-            <div className={styles.LockContainer}>
-              <div>
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                </svg>
+          <div className={styles.InputContainer}>
+            <div className={styles.InputGroup}>
+              <div className={styles.IconContainer}>
+                <span className={styles.Icon}>
+                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                </span>
               </div>
-              <div>
-                <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+              <input
+                type="number"
+                className={styles.InputField}
+                placeholder=""
+                disabled
+                value={totalSelected}
+              />
+              <div className={styles.LockContainer}>
+                <div>
+                  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
                   </svg>
-                </button>
-                {dropdownLock && (
-                <div className={styles.optionDropdown}>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                    <div>Locked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div>Unlocked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
-                    <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
-                      <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
-                    </svg>
-                    <div>Balance</div>
-                  </button>
                 </div>
-                )}
+                <div>
+                  <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+                    </svg>
+                  </button>
+                  {dropdownLock && (
+                    <div className={styles.optionDropdown}>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        <div>Locked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div>Unlocked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
+                        <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
+                          <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
+                        </svg>
+                        <div>Balance</div>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         )}
 
         {lock === 'balance' && (
-        <div className={styles.InputContainer}>
-          <div className={styles.InputGroup}>
-            <div className={styles.IconContainer}>
-              <span className={styles.Icon}>
-                <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
-              </span>
-            </div>
-            <input
-              type="number"
-              className={styles.InputField}
-              placeholder="0.0"
-              value={inputBalance}
-              onChange={(e) => {
-                setInputBalance(e.target.value);
-              }}
-            />
-            <div className={styles.LockContainer}>
-              <div>
-                <svg style={{ marginTop: '4px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
-                  <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
-                </svg>
+          <div className={styles.InputContainer}>
+            <div className={styles.InputGroup}>
+              <div className={styles.IconContainer}>
+                <span className={styles.Icon}>
+                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                </span>
               </div>
-              <div>
-                <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+              <input
+                type="number"
+                className={styles.InputField}
+                placeholder="0.0"
+                value={inputBalance}
+                onChange={(e) => {
+                  setInputBalance(e.target.value);
+                }}
+              />
+              <div className={styles.LockContainer}>
+                <div>
+                  <svg style={{ marginTop: '4px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
+                    <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
                   </svg>
-                </button>
-                {dropdownLock && (
-                <div className={styles.optionDropdown}>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
-                    </svg>
-                    <div>Locked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
-                    <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <div>Unlocked</div>
-                  </button>
-                  <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
-                    <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
-                      <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
-                    </svg>
-                    <div>Balance</div>
-                  </button>
                 </div>
-                )}
+                <div>
+                  <button type="button" className={styles.relativeDropdown} onClick={() => setDropdownLock(!dropdownLock)}>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
+                    </svg>
+                  </button>
+                  {dropdownLock && (
+                    <div className={styles.optionDropdown}>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('locked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M12 6H6M12 6C13.6569 6 15 7.34315 15 9V13.5C15 15.1569 13.6569 16.5 12 16.5H6C4.34315 16.5 3 15.1569 3 13.5V9C3 7.34315 4.34315 6 6 6M12 6V4.5C12 2.84315 10.6569 1.5 9 1.5C7.34315 1.5 6 2.84315 6 4.5V6M9 12V10.5" stroke="white" strokeWidth="1.3" strokeLinecap="round" />
+                        </svg>
+                        <div>Locked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('unLocked')}>
+                        <svg style={{ marginTop: '4px' }} width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M9 12V10.5M12 6H6C4.34315 6 3 7.34315 3 9V13.5C3 15.1569 4.34315 16.5 6 16.5H12C13.6569 16.5 15 15.1569 15 13.5V9C15 7.34315 13.6569 6 12 6ZM12 6L12 4.5C12 2.84315 10.6569 1.5 9.00002 1.5C7.8896 1.5 6.92008 2.1033 6.40137 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        <div>Unlocked</div>
+                      </button>
+                      <button type="button" className={styles.clearButtonCss} onClick={() => updateLock('balance')}>
+                        <svg style={{ marginTop: '8px' }} xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" className="bi bi-wallet" viewBox="0 0 18 18">
+                          <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268M1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1" />
+                        </svg>
+                        <div>Balance</div>
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         )}
 
         {lock === 'balance' && (
@@ -573,16 +603,16 @@ function WithdrawPopup({
       </div>
 
       {lock !== 'balance' && (
-      <button type="button" className={styles.ButtonContainer} disabled={loading} onClick={handleWithdraw}>
-        {loading ? 'Loading...' : 'Withdraw'}
-        <div className={styles.Ellipse} />
-      </button>
+        <button type="button" className={styles.ButtonContainer} disabled={loading} onClick={handleWithdraw}>
+          {loading ? 'Loading...' : 'Withdraw'}
+          <div className={styles.Ellipse} />
+        </button>
       )}
       {lock === 'balance' && (
-      <button type="button" className={styles.ButtonContainer} disabled={loading} onClick={handleConvert}>
-        {loading ? 'Loading...' : 'Convert'}
-        <div className={styles.Ellipse} />
-      </button>
+        <button type="button" className={styles.ButtonContainer} disabled={loading} onClick={handleConvert}>
+          {loading ? 'Loading...' : 'Convert'}
+          <div className={styles.Ellipse} />
+        </button>
       )}
     </Modal>
   );
@@ -593,6 +623,7 @@ WithdrawPopup.propTypes = {
   closeWithdrawModal: PropTypes.func.isRequired,
   decimals: PropTypes.number,
   wrapBalance: PropTypes.number,
+  setUpdateUI: PropTypes.func.isRequired,
 };
 
 WithdrawPopup.defaultProps = {

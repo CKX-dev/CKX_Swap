@@ -58,6 +58,7 @@ export interface BurnArgs {
 }
 export interface Deposit {
   'addToken' : ActorMethod<[Principal, string], TxReceipt>,
+  'approveToken' : ActorMethod<[bigint], ApproveResult>,
   'balanceOf' : ActorMethod<[string, Principal], bigint>,
   'burn' : ActorMethod<[BurnArgs], TransferResult>,
   'compareTimestamps' : ActorMethod<[Time, Time], bigint>,
@@ -103,6 +104,7 @@ export interface Deposit {
   'mint' : ActorMethod<[Mint], TransferResult>,
   'privateBurn' : ActorMethod<[bigint], TransferResult>,
   'setTokenId' : ActorMethod<[string], string>,
+  'timeNow' : ActorMethod<[], bigint>,
   'unWrapToken' : ActorMethod<[bigint], TransferResult>,
   'withdrawDepositAndInterest' : ActorMethod<[bigint], TransferResult>,
   'withdrawDepositAndInterestArray' : ActorMethod<
@@ -113,6 +115,7 @@ export interface Deposit {
   'withdrawInterestAll' : ActorMethod<[], TransferResult>,
 }
 export interface DepositType {
+  'id' : bigint,
   'startTime' : Time,
   'duration' : bigint,
   'firstMultiplier' : number,

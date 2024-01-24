@@ -144,7 +144,8 @@
 }
 
 .DropdownIcon {
-  transform: rotate(90deg);
+  /* transform: rotate(90deg); */
+  cursor: pointer;
 }
 
 .Label1 {

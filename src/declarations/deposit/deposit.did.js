@@ -1,5 +1,21 @@
 export const idlFactory = ({ IDL }) => {
   const TxReceipt = IDL.Variant({ 'ok' : IDL.Nat, 'err' : IDL.Text });
+  const TxIndex = IDL.Nat;
+  const ApproveError = IDL.Variant({
+    'GenericError' : IDL.Record({
+      'message' : IDL.Text,
+      'error_code' : IDL.Nat,
+    }),
+    'TemporarilyUnavailable' : IDL.Null,
+    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
+    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
+    'AllowanceChanged' : IDL.Record({ 'current_allowance' : IDL.Nat }),
+    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'TooOld' : IDL.Null,
+    'Expired' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
+    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
+  });
+  const ApproveResult = IDL.Variant({ 'Ok' : TxIndex, 'Err' : ApproveError });
   const Subaccount = IDL.Vec(IDL.Nat8);
   const Balance = IDL.Nat;
   const BurnArgs = IDL.Record({
@@ -8,7 +24,6 @@ export const idlFactory = ({ IDL }) => {
     'created_at_time' : IDL.Opt(IDL.Nat64),
     'amount' : Balance,
   });
-  const TxIndex = IDL.Nat;
   const Timestamp = IDL.Nat64;
   const TransferError = IDL.Variant({
     'GenericError' : IDL.Record({
@@ -26,6 +41,7 @@ export const idlFactory = ({ IDL }) => {
   const TransferResult = IDL.Variant({ 'Ok' : TxIndex, 'Err' : TransferError });
   const Time = IDL.Int;
   const DepositType = IDL.Record({
+    'id' : IDL.Nat,
     'startTime' : Time,
     'duration' : IDL.Nat,
     'firstMultiplier' : IDL.Float64,
@@ -144,21 +160,6 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(IDL.Nat64),
     'spender' : IDL.Principal,
   });
-  const ApproveError = IDL.Variant({
-    'GenericError' : IDL.Record({
-      'message' : IDL.Text,
-      'error_code' : IDL.Nat,
-    }),
-    'TemporarilyUnavailable' : IDL.Null,
-    'Duplicate' : IDL.Record({ 'duplicate_of' : IDL.Nat }),
-    'BadFee' : IDL.Record({ 'expected_fee' : IDL.Nat }),
-    'AllowanceChanged' : IDL.Record({ 'current_allowance' : IDL.Nat }),
-    'CreatedInFuture' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
-    'TooOld' : IDL.Null,
-    'Expired' : IDL.Record({ 'ledger_time' : IDL.Nat64 }),
-    'InsufficientFunds' : IDL.Record({ 'balance' : IDL.Nat }),
-  });
-  const ApproveResult = IDL.Variant({ 'Ok' : TxIndex, 'Err' : ApproveError });
   const TransferFromArgs = IDL.Record({
     'to' : Account,
     'fee' : IDL.Opt(Balance),
@@ -193,6 +194,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Deposit = IDL.Service({
     'addToken' : IDL.Func([IDL.Principal, IDL.Text], [TxReceipt], []),
+    'approveToken' : IDL.Func([IDL.Nat], [ApproveResult], []),
     'balanceOf' : IDL.Func([IDL.Text, IDL.Principal], [IDL.Nat], ['query']),
     'burn' : IDL.Func([BurnArgs], [TransferResult], []),
     'compareTimestamps' : IDL.Func([Time, Time], [IDL.Int], []),
@@ -257,6 +259,7 @@ export const idlFactory = ({ IDL }) => {
     'mint' : IDL.Func([Mint], [TransferResult], []),
     'privateBurn' : IDL.Func([IDL.Nat], [TransferResult], []),
     'setTokenId' : IDL.Func([IDL.Text], [IDL.Text], []),
+    'timeNow' : IDL.Func([], [IDL.Int], []),
     'unWrapToken' : IDL.Func([IDL.Nat], [TransferResult], []),
     'withdrawDepositAndInterest' : IDL.Func([IDL.Nat], [TransferResult], []),
     'withdrawDepositAndInterestArray' : IDL.Func(

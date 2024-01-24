@@ -12,6 +12,8 @@ import * as swap from '../../src/declarations/swap';
 import * as token0 from '../../src/declarations/token0';
 import * as token1 from '../../src/declarations/token1';
 import * as deposit from '../../src/declarations/deposit';
+import * as aggregator from '../../src/declarations/aggregator';
+import * as borrow from '../../src/declarations/borrow';
 
 const AuthContext = createContext();
 
@@ -52,6 +54,8 @@ export const useAuthClient = (options = defaultOptions) => {
   const [token0Actor, setToken0Actor] = useState(null);
   const [token1Actor, setToken1Actor] = useState(null);
   const [depositActor, setDepositActor] = useState(null);
+  const [aggregatorActor, setAggregatorActor] = useState(null);
+  const [borrowActor, setBorrowActor] = useState(null);
 
   useEffect(() => {
     // Initialize AuthClient
@@ -112,6 +116,22 @@ export const useAuthClient = (options = defaultOptions) => {
     });
 
     setDepositActor(depositActorRes);
+
+    const aggregatorActorRes = aggregator.createActor(aggregator.canisterId, {
+      agentOptions: {
+        identity: identityRes,
+      },
+    });
+
+    setAggregatorActor(aggregatorActorRes);
+
+    const borrowActorRes = borrow.createActor(borrow.canisterId, {
+      agentOptions: {
+        identity: identityRes,
+      },
+    });
+
+    setBorrowActor(borrowActorRes);
   }
 
   async function logout() {
@@ -130,6 +150,8 @@ export const useAuthClient = (options = defaultOptions) => {
     token0Actor,
     token1Actor,
     depositActor,
+    aggregatorActor,
+    borrowActor,
   };
 };
 

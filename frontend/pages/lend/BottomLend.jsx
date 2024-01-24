@@ -1,7 +1,10 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import styles from './index.module.css';
 
-function BottomLend() {
+function BottomLend(
+  { switchPage },
+) {
   return (
     <div style={{ color: 'rgba(204, 204, 204, 1)' }}>
       <div style={{
@@ -11,7 +14,13 @@ function BottomLend() {
         <div style={{ width: '50%' }} className={styles.BottomRight}>
           <div>
             <div>
-              <span style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '20px' }}>Share of ckETH interest:</span>
+              <span style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '20px' }}>
+                Share of
+                {' '}
+                {switchPage === 'ckETH' ? 'ckETH' : 'ckBTC'}
+                {' '}
+                interest:
+              </span>
               {' '}
               <span style={{ color: 'rgba(126, 135, 255, 1)', fontSize: '24px' }}>0.0001673%</span>
             </div>
@@ -24,9 +33,16 @@ function BottomLend() {
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>COUNT OF D.CKETH IN CIRCULATION</div>
+            <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>
+              COUNT OF
+              {switchPage === 'ckETH' ? ' D.CKETH' : ' D.CKBTC'}
+              {' '}
+              IN CIRCULATION
+
+            </div>
             <div style={{ display: 'flex', justifyContent: 'end', gap: '10px' }}>
-              <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+              {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+                : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
               <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>17,973,373.37</div>
             </div>
           </div>
@@ -48,12 +64,18 @@ function BottomLend() {
               padding: '20px',
             }}
             >
-              <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>D.CKETH BALANCE</div>
+              <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>
+                {' '}
+                {switchPage === 'ckETH' ? 'D.CKETH' : 'D.CKBTC'}
+                {' '}
+                BALANCE
+              </div>
               <div style={{
                 color: 'rgba(204, 204, 204, 1)', fontSize: '24px', display: 'flex', gap: '10px', justifyContent: 'end',
               }}
               >
-                <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+                {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+                  : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
                 <div style={{ marginTop: '4px', fontWeight: 500 }}>96.72</div>
               </div>
             </div>
@@ -72,7 +94,8 @@ function BottomLend() {
                 color: 'rgba(204, 204, 204, 1)', fontSize: '24px', display: 'flex', gap: '10px', justifyContent: 'end',
               }}
               >
-                <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+                {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
+                  : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
                 <div style={{ marginTop: '4px', fontWeight: 500 }}>96.72</div>
               </div>
             </div>
@@ -87,7 +110,7 @@ function BottomLend() {
             backgroundColor: 'rgba(28, 29, 38, 1)',
           }}
           >
-            <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>global average lock time</div>
+            <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>GLOBAL AVERAGE LOCK TIME</div>
             <div style={{ textAlign: 'right', color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>433 days</div>
           </div>
         </div>
@@ -95,5 +118,9 @@ function BottomLend() {
     </div>
   );
 }
+
+BottomLend.propTypes = {
+  switchPage: PropTypes.string.isRequired,
+};
 
 export default BottomLend;

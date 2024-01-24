@@ -1,0 +1,50 @@
+.Container{
+  margin-top: 32px;
+  padding-top: 32px;
+  border-top: 1px solid rgba(44, 45, 59, 1);
+}
+
+.FlexCenter{
+  display: flex;
+}
+
+.TextCenter + .TextCenter {
+  border-left: 1px solid rgba(44, 45, 59, 1);
+}
+
+.TextCenter{
+  width: 50%;
+  font-size: 20px;
+  flex: 1 1 auto;
+}
+
+.MediumTitle{
+  color: #858697;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.LargeNum{
+  color: #CCCCCC;
+  font-weight: 500;
+  font-size: 18px;
+}
+
+.TextToken{
+  color: #CCCCCC;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.TextXSmall {
+  color: #CCCCCC;
+  font-weight: 300;
+  font-size: 12px;
+}
+
+.Value {
+  color: #858697;
+  font-weight: 400;
+  font-size: 12px;
+  margin-top: 6px;
+}

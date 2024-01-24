@@ -20,6 +20,14 @@
       "type": "motoko",
       "main": "canisters/deposit/deposit.mo"
     },
+    "aggregator": {
+      "type": "motoko",
+      "main": "canisters/aggregator/aggregator.mo"
+    },
+    "borrow": {
+      "type": "motoko",
+      "main": "canisters/borrow/borrow.mo"
+    },
     "assets": {
       "dependencies": [
         "swap", "token0", "token1"

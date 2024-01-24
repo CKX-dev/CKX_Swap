@@ -38,6 +38,7 @@ function DepositPopup({
   closeDepositModal,
   decimals,
   tokenBalance,
+  setUpdateUI,
 }) {
   const { depositActor, token0Actor } = useAuth();
 
@@ -89,6 +90,7 @@ function DepositPopup({
           toast.success('Deposit successfull');
           closeModal();
           setLoading(false);
+          setUpdateUI((prev) => !prev);
         } else {
           console.log('Tx: ', tx);
           toast.error('Deposit failed');
@@ -262,8 +264,8 @@ function DepositPopup({
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
         <div style={{ color: 'rgba(133, 134, 151, 1)', fontWeight: 400 }}>Amount of d.ckETH recieved</div>
         <div style={{ display: 'flex' }}>
-          <img width={18} height={18} src="frontend/assets/ckETH.png" alt="" />
-          <div style={{ marginLeft: '8px' }}>{(amountInput * (amountReceived(selectedOption))).toFixed(4)}</div>
+          <img width={18} height={18} src="frontend/assets/d.ckETH.png" alt="" />
+          {amountInput && amountReceived(selectedOption) && <div style={{ marginLeft: '8px' }}>{Math.round(amountInput * (amountReceived(selectedOption)) * 1000) / 1000}</div>}
         </div>
       </div>
       <div style={{
@@ -286,6 +288,7 @@ DepositPopup.propTypes = {
   closeDepositModal: PropTypes.func.isRequired,
   decimals: PropTypes.number,
   tokenBalance: PropTypes.number,
+  setUpdateUI: PropTypes.func.isRequired,
 };
 
 DepositPopup.defaultProps = {

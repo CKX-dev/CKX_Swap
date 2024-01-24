@@ -7,7 +7,8 @@ import PropTypes from 'prop-types';
 import { Principal } from '@dfinity/principal';
 import { useAuth } from '../../../hooks/use-auth-client';
 
-import * as swap from '../../../../src/declarations/swap';
+// import * as swap from '../../../../src/declarations/swap';
+import * as aggregator from '../../../../src/declarations/aggregator';
 
 import styles from './index.module.css';
 
@@ -35,7 +36,10 @@ function AddLiquidityModal({
   priceMin,
   priceMax,
 }) {
-  const { swapActor, token0Actor, token1Actor } = useAuth();
+  const {
+    swapActor, token0Actor, token1Actor,
+    aggregatorActor,
+  } = useAuth();
 
   const [tokens, setTokens] = useState([]);
   const [pair, setPair] = useState();
@@ -48,6 +52,101 @@ function AddLiquidityModal({
     setTokens([token0, token1]);
   };
 
+  // const handleAddLiquidity = async () => {
+  //   try {
+  //     setLoading(true);
+  //     let res;
+  //     const record = {
+  //       fee: [],
+  //       memo: [],
+  //       from_subaccount: [],
+  //       created_at_time: [],
+  //       amount: formValues.amount0Desired,
+  //       expected_allowance: [],
+  //       expires_at: [],
+  //       spender: Principal.fromText(swap.canisterId),
+  //     };
+  //     const record1 = {
+  //       fee: [],
+  //       memo: [],
+  //       from_subaccount: [],
+  //       created_at_time: [],
+  //       amount: formValues.amount1Desired,
+  //       expected_allowance: [],
+  //       expires_at: [],
+  //       spender: Principal.fromText(swap.canisterId),
+  //     };
+
+  //     if (formValues.token0 === pair[0].token0) {
+  //       await token0Actor.icrc2_approve(record);
+  //       await token1Actor.icrc2_approve(record1);
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token0),
+  //         formValues.amount0Desired,
+  //       );
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token1),
+  //         formValues.amount1Desired,
+  //       );
+
+  //       const timestamp = Math.floor(new Date().getTime() * 10000000000);
+
+  //       res = await swapActor.addLiquidity(
+  //         Principal.fromText(formValues.token0),
+  //         Principal.fromText(formValues.token1),
+  //         formValues.amount0Desired,
+  //         formValues.amount1Desired,
+  //         0,
+  //         0,
+  //         timestamp,
+  //       );
+  //     } else {
+  //       await token1Actor.icrc2_approve(record);
+  //       await token0Actor.icrc2_approve(record1);
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token0),
+  //         formValues.amount0Desired,
+  //       );
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token1),
+  //         formValues.amount1Desired,
+  //       );
+
+  //       const timestamp = Math.floor(new Date().getTime() * 10000000000);
+
+  //       res = await swapActor.addLiquidity(
+  //         Principal.fromText(formValues.token1),
+  //         Principal.fromText(formValues.token0),
+  //         formValues.amount1Desired,
+  //         formValues.amount0Desired,
+  //         0,
+  //         0,
+  //         timestamp,
+  //       );
+  //     }
+  //     setLoading(false);
+
+  //     closeAddLiquidityModal();
+
+  //     if ('ok' in res) {
+  //       toast.success('Liquidity added successfully');
+  //     } else {
+  //       console.log('RES: ', res);
+  //       toast.error('Liquidity not added successfully');
+  //     }
+  //   } catch (e) {
+  //     console.log(e);
+  //     toast.error('Liquidity not added successfully');
+  //     setLoading(false);
+
+  //     closeAddLiquidityModal();
+  //   }
+  // };
+
   const handleAddLiquidity = async () => {
     try {
       setLoading(true);
@@ -57,87 +156,58 @@ function AddLiquidityModal({
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: formValues.amount0Desired,
+        amount: formValues.amount0Desired * 10 ** 18,
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(swap.canisterId),
+        spender: Principal.fromText(aggregator.canisterId),
       };
       const record1 = {
         fee: [],
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: formValues.amount1Desired,
+        amount: formValues.amount1Desired * 10 ** 18,
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(swap.canisterId),
+        spender: Principal.fromText(aggregator.canisterId),
       };
 
       if (formValues.token0 === pair[0].token0) {
-        // await token0Actor.icrc2_approve(Principal.fromText(swap.canisterId),
-        // formValues.amount0Desired);
-        // await token1Actor.icrc2_approve(Principal.fromText(swap.canisterId),
-        // formValues.amount1Desired);
         await token0Actor.icrc2_approve(record);
         await token1Actor.icrc2_approve(record1);
 
-        await swapActor.deposit(
-          Principal.fromText(formValues.token0),
-          formValues.amount0Desired,
-        );
-
-        await swapActor.deposit(
-          Principal.fromText(formValues.token1),
-          formValues.amount1Desired,
-        );
-
         const timestamp = Math.floor(new Date().getTime() * 10000000000);
 
-        res = await swapActor.addLiquidity(
+        res = await aggregatorActor.addLP(
           Principal.fromText(formValues.token0),
           Principal.fromText(formValues.token1),
-          formValues.amount0Desired,
-          formValues.amount1Desired,
+          formValues.amount0Desired * 10 ** 18,
+          formValues.amount1Desired * 10 ** 18,
           0,
           0,
           timestamp,
         );
       } else {
-        // await token1Actor.icrc2_approve(Principal.fromText(swap.canisterId),
-        // formValues.amount0Desired);
-        // await token0Actor.icrc2_approve(Principal.fromText(swap.canisterId),
-        // formValues.amount1Desired);
         await token1Actor.icrc2_approve(record);
         await token0Actor.icrc2_approve(record1);
 
-        await swapActor.deposit(
-          Principal.fromText(formValues.token0),
-          formValues.amount0Desired,
-        );
-
-        await swapActor.deposit(
-          Principal.fromText(formValues.token1),
-          formValues.amount1Desired,
-        );
-
         const timestamp = Math.floor(new Date().getTime() * 10000000000);
 
-        res = await swapActor.addLiquidity(
+        res = await aggregatorActor.addLP(
           Principal.fromText(formValues.token1),
           Principal.fromText(formValues.token0),
-          formValues.amount1Desired,
-          formValues.amount0Desired,
+          formValues.amount1Desired * 10 ** 18,
+          formValues.amount0Desired * 10 ** 18,
           0,
           0,
           timestamp,
         );
       }
-      // console.log('res la: ', res);
       setLoading(false);
 
       closeAddLiquidityModal();
 
-      if ('ok' in res) {
+      if (res.includes('ok') || res.includes('Ok')) {
         toast.success('Liquidity added successfully');
       } else {
         console.log('RES: ', res);

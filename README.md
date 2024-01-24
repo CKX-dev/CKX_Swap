@@ -25,7 +25,7 @@ npm run dev
 ### Open new terminal:
 
 #### Replace with your identity principal on front end
-dfx deploy token0 --argument '( record {                      
+dfx deploy token1 --argument '( record {                      
       name = "Chain-key Ether";                               
       symbol = "ckETH";                                             
       decimals = 18;                                                    
@@ -46,7 +46,7 @@ dfx deploy token0 --argument '( record {
   })'  
 
 
-  dfx deploy token1 --argument '( record {                      
+  dfx deploy token0 --argument '( record {                      
       name = "Chain-key Bitcoin";                                                                
       symbol = "ckBTC";                                             
       decimals = 18;                                                                                      
@@ -67,6 +67,7 @@ dfx deploy token0 --argument '( record {
   })'
 
 ### Add token and create pair
+dfx deploy --network local swap --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id swap)\")"
 dfx canister call swap addToken "(principal \"$(dfx canister id token0)\", \"ICRC1\")"
 dfx canister call swap addToken "(principal \"$(dfx canister id token1)\", \"ICRC1\")"
 dfx canister call swap createPair "(principal \"$(dfx canister id token0)\", principal \"$(dfx canister id token1)\")"                                                                  
@@ -86,14 +87,15 @@ dfx canister call token1 mint "(principal \"euhen-l7nid-hchro-ehmy2-tjuyf-omnst-
 ```bash
 dfx deploy --network local deposit --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id deposit)\", \"d.ckETH'\", \"d.ckETH\", \"$(dfx canister --network local id token0)\")"
 
-dfx canister call deposit addToken "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\", \"ICRC2\")"
+dfx canister call deposit addToken "(principal \"$(dfx canister id token0)\", \"ICRC2\")"
+dfx canister call deposit addToken "(principal \"$(dfx canister id token1)\", \"ICRC2\")"
 
 dfx canister call token0 icrc2_approve "(record { amount = 1_000_000_000_000_000_000; spender = principal \"bd3sg-teaaa-aaaaa-qaaba-cai\" })"  
 dfx canister call deposit deposit "(principal \"br5f7-7uaaa-aaaaa-qaaca-cai\",1_000_000_000_000_000,14)"
 
 dfx canister call deposit withdrawInterest "(0)"
 
-dfx deploy token0 --argument '( record {                      
+dfx deploy token1 --argument '( record {                      
       name = "Chain-key Ether";                               
       symbol = "ckETH";                                             
       decimals = 18;                                                    
@@ -114,7 +116,7 @@ dfx deploy token0 --argument '( record {
   })'  
 
 
-  dfx deploy token1 --argument '( record {                      
+  dfx deploy token0 --argument '( record {                      
       name = "Chain-key Bitcoin";                                                                
       symbol = "ckBTC";                                             
       decimals = 18;                                                                                      
@@ -134,7 +136,73 @@ dfx deploy token0 --argument '( record {
       advanced_settings = null;
   })'
 
-  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "37her-33fjq-rfwha-qivgx-d6vla-k5m2i-h2g4r-nblsc-6adue-7bn7m-sae"}; amount= 1_000_000_000_000_000 })'
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "37her-33fjq-rfwha-qivgx-d6vla-k5m2i-h2g4r-nblsc-6adue-7bn7m-sae"}; amount= 1_000_000_000_000_000_000 })'
 
-  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "53htl-env4y-cphkw-rtzc2-hirv4-4dxno-6wai5-puaxk-iuqqp-tzsq6-2ae"}; amount= 1_000_000_000_000_000 })'
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "qnpll-mi6f2-gvc5r-jllnm-ksizs-ibfdb-yheio-3zlaw-zinu7-7ciuz-yqe"}; amount= 6_000_000_000_000_000_000 })'
+
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "br5f7-7uaaa-aaaaa-qaaca-cai"}; amount= 10_000_000_000_000_000_000 })'
+
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "be2us-64aaa-aaaaa-qaabq-cai"}; amount= 10_000_000_000_000_000_000 })'
+
+  dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal "bkyz2-fmaaa-aaaaa-qaaaq-cai"}; amount= 10_000_000_000_000_000_000 })'
+```
+
+
+aggregator
+```bash
+dfx deploy --network local aggregator --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id aggregator)\", \"$(dfx canister --network local id swap)\")"
+
+// br5f7-7uaaa-aaaaa-qaaca-cai
+// b77ix-eeaaa-aaaaa-qaada-cai:bw4dl-smaaa-aaaaa-qaacq-cai
+
+dfx canister call token0 icrc2_approve "(record { amount = 1_000_000_000; spender = principal \"$(dfx canister --network local id aggregator)\" })"  
+
+dfx canister call token1 icrc2_approve "(record { amount = 1_000_000_000; spender = principal \"$(dfx canister --network local id aggregator)\" })"  
+
+dfx canister call aggregator addLP "(
+    principal \"b77ix-eeaaa-aaaaa-qaada-cai\",
+    principal \"by6od-j4aaa-aaaaa-qaadq-cai\",
+    10000000,
+    20000000,
+    0,
+    0,
+    0,
+)"  
+
+dfx canister call aggregator icrc2_approve "(record { amount = 14141135; spender = principal \"$(dfx canister --network local id aggregator)\" })"  
+
+dfx canister call aggregator removeLP "(
+    principal \"bw4dl-smaaa-aaaaa-qaacq-cai\",
+    principal \"b77ix-eeaaa-aaaaa-qaada-cai\",
+    14141135,
+    0,
+    0,
+    principal \"37her-33fjq-rfwha-qivgx-d6vla-k5m2i-h2g4r-nblsc-6adue-7bn7m-sae\",
+    0,
+)"  
+```
+
+
+```bash
+// FOR LOAN
+
+dfx deploy --network local borrow --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network local id aggregator)\", \"$(dfx canister --network local id swap)\", principal \"$(dfx canister --network local id token0)\", principal \"$(dfx canister --network local id token1)\")"
+
+dfx canister call aggregator icrc2_approve "(record { amount = 14141135; spender = principal \"$(dfx canister --network local id borrow)\" })"  
+
+dfx canister call borrow deposit "(14141135)"
+# dfx canister call borrow deposit "(14141135, 10000000, principal \"by6od-j4aaa-aaaaa-qaadq-cai\")"
+
+------------------------------------------------------------------------------------------------------
+
+
+dfx canister call borrow borrow "(18000000, principal \"by6od-j4aaa-aaaaa-qaadq-cai\")"
+
+dfx canister call token1 icrc2_approve "(record { amount = 1_000_000_000; spender = principal \"$(dfx canister --network local id borrow)\" })"
+
+dfx canister call borrow rePay "()"
+
+dfx canister call borrow withdraw "()"
+
+dfx canister call borrow getDepositId "()"
 ```

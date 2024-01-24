@@ -153,6 +153,7 @@ type DepositType =
    amount: nat;
    duration: nat;
    firstMultiplier: float64;
+   id: nat;
    isActive: bool;
    lastUpdateTime: int;
    startTime: Time;
@@ -160,6 +161,7 @@ type DepositType =
 type Deposit = 
  service {
    addToken: (principal, text) -> (TxReceipt);
+   approveToken: (nat) -> (ApproveResult);
    balanceOf: (text, principal) -> (nat) query;
    burn: (BurnArgs) -> (TransferResult);
    compareTimestamps: (Time, Time) -> (int);
@@ -197,6 +199,7 @@ type Deposit =
    mint: (Mint) -> (TransferResult);
    privateBurn: (nat) -> (TransferResult);
    setTokenId: (text) -> (text);
+   timeNow: () -> (int);
    unWrapToken: (nat) -> (TransferResult);
    withdrawDepositAndInterest: (nat) -> (TransferResult);
    withdrawDepositAndInterestArray: (vec nat) -> (vec nat);

@@ -12,6 +12,8 @@
   right: 0;
   z-index: 1;
   width: 300px;
+  color: black;
+  margin-top: 8px;
 }
 
 .TextConainer {

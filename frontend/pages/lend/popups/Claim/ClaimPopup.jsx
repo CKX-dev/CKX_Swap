@@ -33,6 +33,7 @@ function SupplyPopup({
   isClaimOpen,
   closeClaim,
   value,
+  setUpdateUI,
 }) {
   const { depositActor, principal } = useAuth();
 
@@ -52,6 +53,7 @@ function SupplyPopup({
           toast.success('Claim successfull');
           closeModal();
           setLoading(false);
+          setUpdateUI((prev) => !prev);
         } else {
           console.log('Claim: ', tx);
           toast.error('Claim failed');
@@ -78,7 +80,8 @@ function SupplyPopup({
         <div style={{ textAlign: 'center', fontWeight: 500 }}>
           I confirm claiming of
           {' '}
-          {value}
+          {value && Math.round(value * 1000) / 1000}
+          {!value && '0'}
           {' '}
           ckETH
         </div>
@@ -117,6 +120,7 @@ SupplyPopup.propTypes = {
   isClaimOpen: PropTypes.bool.isRequired,
   closeClaim: PropTypes.func.isRequired,
   value: PropTypes.number,
+  setUpdateUI: PropTypes.func.isRequired,
 };
 
 SupplyPopup.defaultProps = {

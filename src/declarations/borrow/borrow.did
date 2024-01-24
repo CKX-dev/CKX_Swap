@@ -1,0 +1,27 @@
+type Time = int;
+type DepositType = 
+ record {
+   amount: nat;
+   borrow: nat;
+   isActive: bool;
+   isAllowWithdraw: bool;
+   isUsing: bool;
+   startTime: Time;
+   tokenIdBorrow: principal;
+ };
+type Borrow = 
+ service {
+   borrow: (nat, principal) -> (text);
+   deposit: (nat) -> (text);
+   getDepositId: () -> (opt DepositType);
+   getDepositIdPerUser: (principal) -> (opt DepositType);
+   getPairInfo: (nat) -> (vec nat);
+   getPairInfoPrincipal: (nat) -> (vec text);
+   getTokenBalance: (principal, principal) -> (Balance);
+   getTokenDecimals: (principal) -> (nat8);
+   rePay: () -> (text);
+   totalSupply_call: (text) -> (nat);
+   withdraw: (nat) -> (text);
+ };
+type Balance = nat;
+service : (principal, principal, text, principal, principal) -> Borrow

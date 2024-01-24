@@ -26,10 +26,56 @@ function LoggedIn() {
   }, [principal]);
 
   return (
-    <div className={styles.Container}>
-      <button type="button" onClick={toggleDropdown} className={`button ${showDropdown ? 'show' : ''}`}>
-        {accountId ? `${accountId.slice(0, 4)}...${accountId.slice(-4)}` : 'Loading...'}
-      </button>
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{
+          width: 103,
+          height: 28,
+          paddingLeft: 12,
+          paddingRight: 12,
+          paddingTop: 7,
+          paddingBottom: 7,
+          background: '#20212D',
+          borderRadius: 6,
+          overflow: 'hidden',
+          border: '0.50px #393B4C solid',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: 6,
+          display: 'inline-flex',
+          position: 'relative',
+          alignSelf: 'center',
+          cursor: 'pointer',
+        }}
+        onClick={toggleDropdown}
+        aria-hidden="true"
+        className={`button ${showDropdown ? 'show' : ''}`}
+      >
+        <div style={{
+          color: '#A6ADFA',
+          fontSize: 15,
+          fontFamily: 'Inter',
+          fontWeight: '600',
+          lineHeight: 20,
+          wordWrap: 'break-word',
+        }}
+        >
+          {accountId ? `${accountId.slice(0, 4)}...${accountId.slice(-4)}` : 'Loading...'}
+        </div>
+        <div style={{
+          width: 94,
+          height: 44,
+          left: 0,
+          top: 13,
+          position: 'absolute',
+          background: 'rgba(126.44, 135.01, 255, 0.80)',
+          boxShadow: '50px 50px 50px ',
+          borderRadius: 9999,
+          filter: 'blur(50px)',
+        }}
+        />
+      </div>
+
       <div className={`${styles.Dropdown} ${showDropdown ? styles.Show : ''}`}>
         <div className={styles.TextConainer}>
           <strong>Account ID:</strong>

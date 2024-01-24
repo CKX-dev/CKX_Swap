@@ -1,0 +1,71 @@
+.Container{
+  width: 70%;
+  margin: auto;
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.Header{
+  display: flex;
+  margin-top: 102px;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  border-top: 1px solid rgba(44, 45, 59, 1);
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+}
+
+.HeaderTitle{
+  color: #858697;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.HeaderLeft{
+  padding-left: 8px;
+  width: 33%;
+  /* padding-right: 50px; */
+  /* border-right: 1px solid rgba(44, 45, 59, 1); */
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  padding-right: 4.8%;
+}
+
+.HeaderMiddle{
+  padding-right: 4.8%;
+  padding-left: 4.8%;
+  width: 33%;
+  border-left: 1px solid rgba(44, 45, 59, 1);
+  border-right: 1px solid rgba(44, 45, 59, 1);
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+}
+
+.HeaderRight{
+  padding-left: 4.8%;
+  width: 33%;
+  padding-right: 8px;
+}
+
+.Headerdiv{
+  background-color: #2C2D3B33;
+  border-radius: 6px;
+  padding: 6px 8px 6px 8px;
+  display: flex;
+  margin-top: 6px;
+  gap: 6px;
+}
+
+.MTop{
+  margin-top: 2px;
+}
+
+.BorrowDiv{
+  font-size: 24px;
+  margin-top: 42px;
+  display: flex;
+  justify-content: space-between;
+  flex-direction: column;
+  gap: 48px;
+}
