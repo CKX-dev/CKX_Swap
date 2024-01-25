@@ -521,7 +521,7 @@ shared (msg) actor class Deposit(
         if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
         ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
 
-        var firstNum = await getFirstMultiplier(value, duration);
+        var firstNum = getFirstMultiplier(value, duration);
         var maybeId = depositID.get(msg.caller);
         var id = 0;
         switch (maybeId) {
@@ -553,7 +553,7 @@ shared (msg) actor class Deposit(
         return #ok(txcounter - 1)
     };
 
-    public func getFirstMultiplier(value : Nat, period : Nat) : async Float {
+    private func getFirstMultiplier(value : Nat, period : Nat) : Float {
         switch (period) {
             case (1) { return Float.fromInt(value) * 1.0006 };
             case (3) { return Float.fromInt(value) * 1.0518 };
@@ -571,7 +571,7 @@ shared (msg) actor class Deposit(
     };
 
     public func getCurrentMultiplier(userInfo : DepositType) : async Float {
-        var firstMul : Float = await getFirstMultiplier(userInfo.amount, userInfo.duration);
+        var firstMul : Float = getFirstMultiplier(userInfo.amount, userInfo.duration);
         var decayPerDay : Float = await getDecayPerDay(userInfo);
         var daysHavePass : Int = await compareTimestamps(Time.now(), userInfo.startTime);
 
@@ -579,7 +579,7 @@ shared (msg) actor class Deposit(
     };
 
     private func getDecayPerDay(userInfo : DepositType) : async Float {
-        var firstMul : Float = await getFirstMultiplier(userInfo.amount, userInfo.duration);
+        var firstMul : Float = getFirstMultiplier(userInfo.amount, userInfo.duration);
         var deposit : Int = userInfo.amount;
         var duration : Int = userInfo.duration;
 
@@ -615,7 +615,7 @@ shared (msg) actor class Deposit(
                 // var t1 = r[index].lastUpdateTime;
                 var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                 var t2 = Time.now();
-                var firstMultiplier = await getFirstMultiplier(r[index].amount, r[index].duration);
+                var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
                 var decayPerDay = await getDecayPerDay(r[index]);
                 var updateDay = await compareTimestamps(t1, t2);
                 var currentMul : Float = await getCurrentMultiplier(r[index]);
@@ -708,7 +708,7 @@ shared (msg) actor class Deposit(
                 // var t1 = r[index].lastUpdateTime;
                 var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                 var t2 = Time.now();
-                var firstMultiplier = await getFirstMultiplier(r[index].amount, r[index].duration);
+                var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
                 var decayPerDay = await getDecayPerDay(r[index]);
                 var updateDay = await compareTimestamps(t1, t2);
                 var currentMul : Float = await getCurrentMultiplier(r[index]);
@@ -784,7 +784,7 @@ shared (msg) actor class Deposit(
                 for (depEle in r.vals()) {
                     var t1 = depEle.startTime + depEle.lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                     var t2 = Time.now();
-                    var firstMultiplier = await getFirstMultiplier(depEle.amount, depEle.duration);
+                    var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
                     var decayPerDay = await getDecayPerDay(depEle);
                     var updateDay = await compareTimestamps(t1, t2);
                     var currentMul : Float = await getCurrentMultiplier(depEle);
@@ -811,7 +811,7 @@ shared (msg) actor class Deposit(
                 for (depEle in r.vals()) {
                     var t1 = depEle.startTime + depEle.lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                     var t2 = Time.now();
-                    var firstMultiplier = await getFirstMultiplier(depEle.amount, depEle.duration);
+                    var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
                     var decayPerDay = await getDecayPerDay(depEle);
                     var updateDay = await compareTimestamps(t1, t2);
                     var currentMul : Float = await getCurrentMultiplier(depEle);
