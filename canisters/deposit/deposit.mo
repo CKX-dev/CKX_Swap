@@ -378,7 +378,7 @@ shared (msg) actor class Deposit(
     // Get interest
     private var intetest : Float = 0.5;
 
-    public func getInterest(
+    private func getInterest(
         t1 : Time.Time,
         t2 : Time.Time,
         firstMultiplier : Float,
@@ -386,13 +386,13 @@ shared (msg) actor class Deposit(
         period : Nat,
         lastUpdateTime : Int,
         isActive : Bool,
-    ) : async Float {
+    ) : Float {
 
         if (lastUpdateTime >= period) {
             return 0
         };
 
-        var temp : Int = await compareTimestamps(t1, t2);
+        var temp : Int = compareTimestamps(t1, t2);
         // var temp : Int = await compareTimestamps(t1, t1 * nanosecondsPerDay);
         var n : Float = Float.fromInt(temp);
         let condition = Float.greater(n, Float.fromInt(period));
@@ -419,7 +419,7 @@ shared (msg) actor class Deposit(
         return result
     };
 
-    public func compareTimestamps(t1 : Time.Time, t2 : Time.Time) : async Int {
+    private func compareTimestamps(t1 : Time.Time, t2 : Time.Time) : Int {
         if (t1 > t2) {
             return 0
         } else if (t2 > t1) {
@@ -436,7 +436,7 @@ shared (msg) actor class Deposit(
 
     // Get mutiplier
     public func getMultiplier(t1 : Time.Time, t2 : Time.Time, firstMultiplier : Float, decayPerDay : Float, period : Nat) : async Float {
-        var temp : Int = await compareTimestamps(t1, t2);
+        var temp : Int = compareTimestamps(t1, t2);
         var n : Float = Float.fromInt(temp);
         let condition = Float.greaterOrEqual(n, Float.fromInt(period));
         if (condition) {
@@ -573,7 +573,7 @@ shared (msg) actor class Deposit(
     public func getCurrentMultiplier(userInfo : DepositType) : async Float {
         var firstMul : Float = getFirstMultiplier(userInfo.amount, userInfo.duration);
         var decayPerDay : Float = await getDecayPerDay(userInfo);
-        var daysHavePass : Int = await compareTimestamps(Time.now(), userInfo.startTime);
+        var daysHavePass : Int = compareTimestamps(Time.now(), userInfo.startTime);
 
         return userInfo.firstMultiplier - (Float.fromInt(daysHavePass) * decayPerDay)
     };
@@ -617,9 +617,9 @@ shared (msg) actor class Deposit(
                 var t2 = Time.now();
                 var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
                 var decayPerDay = await getDecayPerDay(r[index]);
-                var updateDay = await compareTimestamps(t1, t2);
+                var updateDay = compareTimestamps(t1, t2);
                 var currentMul : Float = await getCurrentMultiplier(r[index]);
-                var currentInterest : Float = await getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
+                var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
 
                 if (currentInterest <= 0) {
                     return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
@@ -710,9 +710,9 @@ shared (msg) actor class Deposit(
                 var t2 = Time.now();
                 var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
                 var decayPerDay = await getDecayPerDay(r[index]);
-                var updateDay = await compareTimestamps(t1, t2);
+                var updateDay = compareTimestamps(t1, t2);
                 var currentMul : Float = await getCurrentMultiplier(r[index]);
-                var currentInterest : Float = await getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
+                var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
 
                 if (currentInterest <= 0) {
                     return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
@@ -786,9 +786,9 @@ shared (msg) actor class Deposit(
                     var t2 = Time.now();
                     var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
                     var decayPerDay = await getDecayPerDay(depEle);
-                    var updateDay = await compareTimestamps(t1, t2);
+                    var updateDay = compareTimestamps(t1, t2);
                     var currentMul : Float = await getCurrentMultiplier(depEle);
-                    var currentInterest : Float = await getInterest(t1, t2, firstMultiplier, decayPerDay, depEle.duration, depEle.lastUpdateTime, depEle.isActive);
+                    var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, depEle.duration, depEle.lastUpdateTime, depEle.isActive);
                     totalInterest += currentInterest
                 };
                 return totalInterest
@@ -813,9 +813,9 @@ shared (msg) actor class Deposit(
                     var t2 = Time.now();
                     var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
                     var decayPerDay = await getDecayPerDay(depEle);
-                    var updateDay = await compareTimestamps(t1, t2);
+                    var updateDay = compareTimestamps(t1, t2);
                     var currentMul : Float = await getCurrentMultiplier(depEle);
-                    var currentInterest : Float = await getInterest(t1, t2, firstMultiplier, decayPerDay, depEle.duration, depEle.lastUpdateTime, depEle.isActive);
+                    var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, depEle.duration, depEle.lastUpdateTime, depEle.isActive);
 
                     if (currentInterest <= 0) {
                         // return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
@@ -967,7 +967,7 @@ shared (msg) actor class Deposit(
 
                 var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                 var t2 = Time.now();
-                var updateDay = await compareTimestamps(t1, t2);
+                var updateDay = compareTimestamps(t1, t2);
                 assert (updateDay >= 0);
 
                 var duration = r[index].duration;
@@ -1206,7 +1206,7 @@ shared (msg) actor class Deposit(
 
                 var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
                 var t2 = Time.now();
-                var updateDay = await compareTimestamps(t1, t2);
+                var updateDay = compareTimestamps(t1, t2);
                 assert (updateDay >= 0);
 
                 var duration = r[index].duration;
