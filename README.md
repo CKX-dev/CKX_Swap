@@ -14,7 +14,8 @@ dfx identity list
 dfx identity use default
 ##################################################
 
-dfx start --background
+dfx start --clean
+### open new terminal
 dfx deps pull
 dfx deps init --argument '(null)' internet-identity
 dfx deps deploy
