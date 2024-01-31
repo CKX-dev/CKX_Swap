@@ -33,7 +33,6 @@ import ICRCtoken "../ICRC1/Canisters/Token";
 import ICRC1 "./ICRC1";
 import Archive "./ICRC1/Canisters/Archive";
 
-// shared (msg) actor class Deposit(owner_ : Principal, deposit_id : Principal, init_args : ICRC1.TokenInitArgs) : async ICRC1.FullInterface = this {
 shared (msg) actor class Deposit(
     owner_ : Principal,
     deposit_id : Principal,
@@ -204,9 +203,7 @@ shared (msg) actor class Deposit(
 
                 let subaccount = getICRC1SubAccount(caller);
                 var depositSubAccount : ICRCAccount = {
-                    // owner = Principal.fromActor(this);
                     owner = caller;
-                    // subaccount = ?subaccount
                     subaccount = null
                 };
                 var balance = await ICRC2TokenActor.icrc1_balance_of(depositSubAccount);
@@ -223,7 +220,6 @@ shared (msg) actor class Deposit(
                         };
                         amount = value
                     };
-                    // var txid = await ICRC2TokenActor.icrc1_transfer(transferArg);
 
                     var txid = await ICRC2TokenActor.icrc2_transfer_from(transferArg);
                     switch (txid) {
@@ -231,7 +227,6 @@ shared (msg) actor class Deposit(
                         case (#Err(e)) { return #ICRCTransferError(e) }
                     }
                 } else {
-                    // return #ICRCTransferError(#CustomError("transaction amount not matched"))
                     return #ICRCTransferError(#CustomError("transaction amount not matched " # Nat.toText(balance) # Principal.toText(caller)))
                 }
             };
@@ -393,7 +388,6 @@ shared (msg) actor class Deposit(
         };
 
         var temp : Int = compareTimestamps(t1, t2);
-        // var temp : Int = await compareTimestamps(t1, t1 * nanosecondsPerDay);
         var n : Float = Float.fromInt(temp);
         let condition = Float.greater(n, Float.fromInt(period));
         if (condition) {
@@ -404,7 +398,6 @@ shared (msg) actor class Deposit(
         if (n < 1) {
             return 0
         } else {
-            // n := n - 1
         };
 
         if (isActive == false) {
@@ -460,8 +453,6 @@ shared (msg) actor class Deposit(
     private var depositInfoCkETH = HashMap.HashMap<Principal, [DepositType]>(1, Principal.equal, Principal.hash);
     private var depositInfoCkBTC = HashMap.HashMap<Principal, [DepositType]>(1, Principal.equal, Principal.hash);
 
-    // private var idPerDepposit = HashMap.HashMap<Principal, Nat>(1, Principal.equal, Principal.hash);
-
     private func updateArrayForPrincipal(userPId : Principal, newValue : Nat, newDepInform : DepositType) : () {
         let maybeArray = depositInfoCkETH.get(userPId);
         var updateInform : [DepositType] = [];
@@ -469,7 +460,6 @@ shared (msg) actor class Deposit(
         switch (maybeArray) {
             case (?r) {
                 for (depEle in r.vals()) {
-                    // updateInform := Array.append(updateInform, [newDepInform])
                     updateInform := Array.append(updateInform, [depEle])
                 }
             };
@@ -493,7 +483,6 @@ shared (msg) actor class Deposit(
         let txid = switch (result) {
             case (#Ok(id)) { id };
             case (#Err(e)) { return #err("token transfer failed:" # tid) };
-            // case(#ICRCTransferError(e)) { return #err("token transfer failed:" # tid); };
             case (#ICRCTransferError(e)) {
                 switch (e) {
                     case (#BadBurn) { return #err("BadBurn") };
@@ -664,18 +653,7 @@ shared (msg) actor class Deposit(
                 //////// case give ckETH
                 var canister2 = actor (canister_token_ID) : actor {
                     icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-                    // icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
                 };
-                // let approve : ICRC1.ApproveResult = await canister2.icrc2_approve {
-                //     from_subaccount = null;
-                //     spender = msg.caller;
-                //     amount = withdrawValue;
-                //     expires_at = null;
-                //     fee = null;
-                //     memo = null;
-                //     created_at_time = null;
-                //     expected_allowance = null
-                // };
                 let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
                     from_subaccount = null;
                     to = { owner = msg.caller; subaccount = null };
@@ -866,18 +844,7 @@ shared (msg) actor class Deposit(
 
         var canister2 = actor (canister_token_ID) : actor {
             icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-            // icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
         };
-        // let approve : ICRC1.ApproveResult = await canister2.icrc2_approve {
-        //     from_subaccount = null;
-        //     spender = msg.caller;
-        //     amount = totalWithdraw;
-        //     expires_at = null;
-        //     fee = null;
-        //     memo = null;
-        //     created_at_time = null;
-        //     expected_allowance = null
-        // };
         let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
             from_subaccount = null;
             to = { owner = msg.caller; subaccount = null };
