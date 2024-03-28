@@ -1,5 +1,6 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
+import type { IDL } from '@dfinity/candid';
 
 export interface Account {
   'owner' : Principal,
@@ -61,19 +62,13 @@ export interface Deposit {
   'approveToken' : ActorMethod<[bigint], ApproveResult>,
   'balanceOf' : ActorMethod<[string, Principal], bigint>,
   'burn' : ActorMethod<[BurnArgs], TransferResult>,
-  'compareTimestamps' : ActorMethod<[Time, Time], bigint>,
   'deposit' : ActorMethod<[Principal, bigint, bigint], TxReceipt>,
   'deposit_cycles' : ActorMethod<[], undefined>,
   'getCurrentMultiplier' : ActorMethod<[DepositType], number>,
   'getDepositId' : ActorMethod<[Principal], [] | [Array<DepositType>]>,
-  'getFirstMultiplier' : ActorMethod<[bigint, bigint], number>,
   'getICRC1SubAccountBalance' : ActorMethod<
     [Principal, string],
     ICRC1SubAccountBalance
-  >,
-  'getInterest' : ActorMethod<
-    [Time, Time, number, number, bigint, bigint, boolean],
-    number
   >,
   'getInterestUI' : ActorMethod<[Principal], number>,
   'getMultiplier' : ActorMethod<[Time, Time, number, number, bigint], number>,
@@ -103,6 +98,8 @@ export interface Deposit {
   'inc' : ActorMethod<[], string>,
   'mint' : ActorMethod<[Mint], TransferResult>,
   'privateBurn' : ActorMethod<[bigint], TransferResult>,
+  'privateWithdraw' : ActorMethod<[bigint, Principal], TransferResult>,
+  'privateWithdrawInterest' : ActorMethod<[bigint, Principal], TransferResult>,
   'setTokenId' : ActorMethod<[string], string>,
   'timeNow' : ActorMethod<[], bigint>,
   'unWrapToken' : ActorMethod<[bigint], TransferResult>,
@@ -232,3 +229,5 @@ export type Value = { 'Int' : bigint } |
   { 'Blob' : Uint8Array | number[] } |
   { 'Text' : string };
 export interface _SERVICE extends Deposit {}
+export declare const idlFactory: IDL.InterfaceFactory;
+export declare const init: (args: { IDL: typeof IDL }) => IDL.Type[];

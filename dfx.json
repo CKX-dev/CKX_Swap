@@ -30,7 +30,7 @@
     },
     "assets": {
       "dependencies": [
-        "swap", "token0", "token1"
+        "swap", "token0", "token1", "borrow", "aggregator"
       ],
       "frontend": {
         "entrypoint": "dist/index.html"

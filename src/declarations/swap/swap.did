@@ -105,8 +105,16 @@ type SwapInfo =
 type Swap = 
  service {
    addAuth: (principal) -> (bool);
+   /// *   1. calculate amount0/amount1
+   ///     *   2. transfer token0/token1 from user to this canister (user has to approve first)
+   ///     *   3. mint lp token for msg.caller
+   ///     *   4. update reserve0/reserve1 info of pair
    addLiquidity: (principal, principal, nat, nat, nat, nat, int) ->
     (TxReceipt);
+   /// *   1. calculate amount0/amount1
+   ///     *   2. transfer token0/token1 from user to this canister (user has to approve first)
+   ///     *   3. mint lp token for msg.caller
+   ///     *   4. update reserve0/reserve1 info of pair
    addLiquidityForUser: (principal, principal, principal, nat, nat) ->
     (TxReceipt);
    addLiquidityForUserTest: (principal, principal, principal, nat, nat) ->
@@ -199,6 +207,11 @@ type Swap =
    name: (text) -> (text) query;
    registerFundRecoveryForUser: (principal, principal, nat) -> (TxReceipt);
    removeAuth: (principal) -> (bool);
+   /// *   1. transfer lp token from user to this canister (user has to approve first)
+   ///     *   2. burn lp token
+   ///     *   3. calculate token0/token1 amount
+   ///     *   4. transfer token0/token1 to user
+   ///     *   5. update reserve0/reserve1 info of pair
    removeLiquidity: (principal, principal, nat, nat, nat, principal, 
     int) -> (TxReceipt);
    removeUserFromBlocklist: (principal) -> (bool);

@@ -10,8 +10,7 @@ export { idlFactory } from "./borrow.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_BORROW ||
-  process.env.BORROW_CANISTER_ID;
+  process.env.CANISTER_ID_BORROW;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const borrow = createActor(canisterId);
+export const borrow = canisterId ? createActor(canisterId) : undefined;

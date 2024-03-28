@@ -10,8 +10,7 @@ export { idlFactory } from "./swap.did.js";
  * beginning in dfx 0.15.0
  */
 export const canisterId =
-  process.env.CANISTER_ID_SWAP ||
-  process.env.SWAP_CANISTER_ID;
+  process.env.CANISTER_ID_SWAP;
 
 export const createActor = (canisterId, options = {}) => {
   const agent = options.agent || new HttpAgent({ ...options.agentOptions });
@@ -40,4 +39,4 @@ export const createActor = (canisterId, options = {}) => {
   });
 };
 
-export const swap = createActor(canisterId);
+export const swap = canisterId ? createActor(canisterId) : undefined;

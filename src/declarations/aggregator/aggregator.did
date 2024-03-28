@@ -217,6 +217,7 @@ type Aggregator =
    icrc1_fee: () -> (Balance__1) query;
    icrc1_metadata: () -> (vec MetaDatum) query;
    icrc1_minting_account: () -> (opt Account__1) query;
+   /// Functions for the ICRC1 token standard
    icrc1_name: () -> (text) query;
    icrc1_supported_standards: () -> (vec SupportedStandard) query;
    icrc1_symbol: () -> (text) query;

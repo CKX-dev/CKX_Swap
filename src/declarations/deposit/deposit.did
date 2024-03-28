@@ -164,14 +164,11 @@ type Deposit =
    approveToken: (nat) -> (ApproveResult);
    balanceOf: (text, principal) -> (nat) query;
    burn: (BurnArgs) -> (TransferResult);
-   compareTimestamps: (Time, Time) -> (int);
    deposit: (principal, nat, nat) -> (TxReceipt);
    deposit_cycles: () -> ();
    getCurrentMultiplier: (DepositType) -> (float64);
    getDepositId: (principal) -> (opt vec DepositType);
-   getFirstMultiplier: (nat, nat) -> (float64);
    getICRC1SubAccountBalance: (principal, text) -> (ICRC1SubAccountBalance);
-   getInterest: (Time, Time, float64, float64, nat, int, bool) -> (float64);
    getInterestUI: (principal) -> (float64);
    getMultiplier: (Time, Time, float64, float64, nat) -> (float64);
    getPrincipal: () -> (principal);
@@ -187,6 +184,7 @@ type Deposit =
    icrc1_fee: () -> (Balance__1) query;
    icrc1_metadata: () -> (vec MetaDatum) query;
    icrc1_minting_account: () -> (opt Account__1) query;
+   /// Functions for the ICRC1 token standard
    icrc1_name: () -> (text) query;
    icrc1_supported_standards: () -> (vec SupportedStandard) query;
    icrc1_symbol: () -> (text) query;
@@ -198,6 +196,8 @@ type Deposit =
    inc: () -> (text);
    mint: (Mint) -> (TransferResult);
    privateBurn: (nat) -> (TransferResult);
+   privateWithdraw: (nat, principal) -> (TransferResult);
+   privateWithdrawInterest: (nat, principal) -> (TransferResult);
    setTokenId: (text) -> (text);
    timeNow: () -> (int);
    unWrapToken: (nat) -> (TransferResult);

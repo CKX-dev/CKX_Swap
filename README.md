@@ -16,10 +16,10 @@ dfx identity use default
 
 dfx start --clean
 ### open new terminal
-dfx deps pull
+# dfx deps pull
 dfx deps init --argument '(null)' internet-identity
 dfx deps deploy
-mops install
+# mops install
 dfx canister create --all
 dfx build
 ```
@@ -37,7 +37,7 @@ dfx build
       initial_balances = vec {
           record {
               record {
-                  owner = principal "<Replace with your principal-id on front end>">;
+                  owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";
                   subaccount = null;
                   };
               1000_000_000_000_000_000_000
@@ -57,7 +57,7 @@ dfx build
       initial_balances = vec {
           record {
               record {
-                  owner = principal "<Replace with your principal-id on front end>">;
+                  owner = principal "nhiuj-uow5k-5ngvy-3cley-gf72c-vkjn2-2xuky-fxfsp-wy4uo-3eroo-fae";
                   subaccount = null;
               };
               1000_000_000_000_000_000_000
