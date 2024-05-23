@@ -20,6 +20,7 @@ import BorrowPage from '../pages/borrow/BorrowPage';
 import LendPage from '../pages/lend/LendPage';
 import PorfolioPage from '../pages/porfolio/PorfolioPage';
 import LeaderboardPage from '../pages/leaderboard/LeaderboardPage';
+import FaucetPage from '../pages/faucet/FaucetPage';
 import BridgePage from '../pages/bridge/BridgePage';
 import DissolvePage from '../pages/bridge/dissolve/DissolvePage';
 import MintPage from '../pages/bridge/mint/MintPage';
@@ -70,6 +71,10 @@ function App() {
           <Route exact path="myPosition" element={<Classic />} />
           <Route exact path="deposit" element={<Classic />} />
           <Route exact path="withdraw" element={<Classic />} />
+        </Route>
+
+        <Route path={LOCATION.FAUCET} element={<Layout />}>
+          <Route index element={<FaucetPage />} />
         </Route>
 
       </Routes>

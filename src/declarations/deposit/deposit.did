@@ -155,6 +155,7 @@ type DepositType =
    firstMultiplier: float64;
    id: nat;
    isActive: bool;
+   lastClaimedTime: int;
    lastUpdateTime: int;
    startTime: Time;
  };
@@ -165,10 +166,12 @@ type Deposit =
    balanceOf: (text, principal) -> (nat) query;
    burn: (BurnArgs) -> (TransferResult);
    deposit: (principal, nat, nat) -> (TxReceipt);
+   depositReward: (principal, nat) -> (TxReceipt);
    deposit_cycles: () -> ();
    getCurrentMultiplier: (DepositType) -> (float64);
    getDepositId: (principal) -> (opt vec DepositType);
    getICRC1SubAccountBalance: (principal, text) -> (ICRC1SubAccountBalance);
+   getInterestInfo: (principal) -> (nat);
    getInterestUI: (principal) -> (float64);
    getMultiplier: (Time, Time, float64, float64, nat) -> (float64);
    getPrincipal: () -> (principal);
@@ -196,14 +199,10 @@ type Deposit =
    inc: () -> (text);
    mint: (Mint) -> (TransferResult);
    privateBurn: (nat) -> (TransferResult);
-   privateWithdraw: (nat, principal) -> (TransferResult);
-   privateWithdrawInterest: (nat, principal) -> (TransferResult);
    setTokenId: (text) -> (text);
    timeNow: () -> (int);
    unWrapToken: (nat) -> (TransferResult);
-   withdrawDepositAndInterest: (nat) -> (TransferResult);
    withdrawDepositAndInterestArray: (vec nat) -> (vec nat);
-   withdrawInterest: (nat) -> (TransferResult);
    withdrawInterestAll: () -> (TransferResult);
  };
 type BurnArgs = 

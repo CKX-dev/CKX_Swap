@@ -11,7 +11,8 @@ import { AuthClient } from '@dfinity/auth-client';
 import * as swap from '../../src/declarations/swap';
 import * as token0 from '../../src/declarations/token0';
 import * as token1 from '../../src/declarations/token1';
-import * as deposit from '../../src/declarations/deposit';
+import * as deposit0 from '../../src/declarations/deposit0';
+import * as deposit1 from '../../src/declarations/deposit1';
 import * as aggregator from '../../src/declarations/aggregator';
 import * as borrow from '../../src/declarations/borrow';
 
@@ -34,7 +35,7 @@ const defaultOptions = {
     identityProvider:
       process.env.DFX_NETWORK === 'ic'
         ? 'https://identity.ic0.app/#authorize'
-        : 'http://localhost:4943?canisterId=rdmx6-jaaaa-aaaaa-aaadq-cai#authorize',
+        : `http://${process.env.CANISTER_ID_INTERNET_IDENTITY}.localhost:4943#authorize`,
   },
 };
 
@@ -53,7 +54,8 @@ export const useAuthClient = (options = defaultOptions) => {
   const [swapActor, setSwapActor] = useState(null);
   const [token0Actor, setToken0Actor] = useState(null);
   const [token1Actor, setToken1Actor] = useState(null);
-  const [depositActor, setDepositActor] = useState(null);
+  const [deposit0Actor, setDeposit0Actor] = useState(null);
+  const [deposit1Actor, setDeposit1Actor] = useState(null);
   const [aggregatorActor, setAggregatorActor] = useState(null);
   const [borrowActor, setBorrowActor] = useState(null);
 
@@ -109,13 +111,21 @@ export const useAuthClient = (options = defaultOptions) => {
 
     setToken1Actor(token1ActorRes);
 
-    const depositActorRes = deposit.createActor(deposit.canisterId, {
+    const deposit0ActorRes = deposit0.createActor(deposit0.canisterId, {
       agentOptions: {
         identity: identityRes,
       },
     });
 
-    setDepositActor(depositActorRes);
+    setDeposit0Actor(deposit0ActorRes);
+
+    const deposit1ActorRes = deposit1.createActor(deposit1.canisterId, {
+      agentOptions: {
+        identity: identityRes,
+      },
+    });
+
+    setDeposit1Actor(deposit1ActorRes);
 
     const aggregatorActorRes = aggregator.createActor(aggregator.canisterId, {
       agentOptions: {
@@ -149,7 +159,8 @@ export const useAuthClient = (options = defaultOptions) => {
     swapActor,
     token0Actor,
     token1Actor,
-    depositActor,
+    deposit0Actor,
+    deposit1Actor,
     aggregatorActor,
     borrowActor,
   };

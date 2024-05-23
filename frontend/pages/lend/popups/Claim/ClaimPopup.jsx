@@ -34,8 +34,10 @@ function SupplyPopup({
   closeClaim,
   value,
   setUpdateUI,
+  depositActor,
+  btcOrEth,
 }) {
-  const { depositActor, principal } = useAuth();
+  const { principal } = useAuth();
 
   const [loading, setLoading] = React.useState(false);
 
@@ -49,6 +51,7 @@ function SupplyPopup({
       try {
         setLoading(true);
         const tx = await depositActor.withdrawInterestAll();
+        console.log(tx);
         if ('Ok' in tx) {
           toast.success('Claim successfull');
           closeModal();
@@ -80,10 +83,10 @@ function SupplyPopup({
         <div style={{ textAlign: 'center', fontWeight: 500 }}>
           I confirm claiming of
           {' '}
-          {value && Math.round(value * 1000) / 1000}
+          {parseFloat(value).toFixed(6)}
           {!value && '0'}
           {' '}
-          ckETH
+          {btcOrEth === 'ckETH' ? 'ckETH' : 'ckBTC'}
         </div>
       </div>
 
@@ -121,6 +124,18 @@ SupplyPopup.propTypes = {
   closeClaim: PropTypes.func.isRequired,
   value: PropTypes.number,
   setUpdateUI: PropTypes.func.isRequired,
+  depositActor: PropTypes.shape({
+    withdrawDepositAndInterestArray: PropTypes.func.isRequired,
+    getTokenBalance: PropTypes.func.isRequired,
+    getWrapBalance: PropTypes.func.isRequired,
+    getInterestInfo: PropTypes.func.isRequired,
+    getDepositId: PropTypes.func.isRequired,
+    getCurrentMultiplier: PropTypes.func.isRequired,
+    unWrapToken: PropTypes.func.isRequired,
+    icrc2_approve: PropTypes.func.isRequired,
+    withdrawInterestAll: PropTypes.func.isRequired,
+  }).isRequired,
+  btcOrEth: PropTypes.string.isRequired,
 };
 
 SupplyPopup.defaultProps = {

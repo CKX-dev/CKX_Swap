@@ -286,6 +286,221 @@ shared (msg) actor class Aggregator(
         }
     };
 
+    public shared (msg) func addLPForUser(
+        userPId : Principal,
+        token0 : Principal,
+        token1 : Principal,
+        amount0Desired : Nat,
+        amount1Desired : Nat,
+        amount0Min : Nat,
+        amount1Min : Nat,
+        deadline : Int,
+    ) : async Text {
+        // transfer token 0 to this canister
+        var token0_canister = actor (Principal.toText(token0)) : actor {
+            icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult;
+            icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
+        };
+        var defaultSubaccount : Blob = Utils.defaultSubAccount();
+        var transferArg : ICRC1.TransferFromArgs = {
+            from_subaccount = {
+                owner = msg.caller;
+                subaccount = ?defaultSubaccount
+            };
+            created_at_time = null;
+            fee = null;
+            memo = null;
+            to = {
+                owner = Principal.fromActor(this);
+                subaccount = ?defaultSubaccount
+            };
+            amount = amount0Desired
+        };
+        var tx0 = await token0_canister.icrc2_transfer_from(transferArg);
+
+        switch (tx0) {
+            case (#Err _) {
+                return "Transfer token 0 fail"
+            };
+            case (#Ok _) {}
+        };
+        // transfer token 1 to this canister
+        var token1_canister = actor (Principal.toText(token1)) : actor {
+            icrc2_transfer_from(args : ICRC1.TransferFromArgs) : async ICRC1.TransferFromResult;
+            icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
+        };
+        var transferArg2 : ICRC1.TransferFromArgs = {
+            from_subaccount = {
+                owner = msg.caller;
+                subaccount = ?defaultSubaccount
+            };
+            created_at_time = null;
+            fee = null;
+            memo = null;
+            to = {
+                owner = Principal.fromActor(this);
+                subaccount = ?defaultSubaccount
+            };
+            amount = amount1Desired
+        };
+        var tx1 = await token1_canister.icrc2_transfer_from(transferArg2);
+
+        switch (tx1) {
+            case (#Err _) {
+                return "Transfer token 1 fail"
+            };
+            case (#Ok _) {}
+        };
+
+        // deposit token to swap canister
+        let approve : ICRC1.ApproveResult = await token0_canister.icrc2_approve {
+            from_subaccount = null;
+            spender = Principal.fromText(swap_id);
+            amount = amount0Desired;
+            expires_at = null;
+            fee = null;
+            memo = null;
+            created_at_time = null;
+            expected_allowance = null
+        };
+
+        let approve2 : ICRC1.ApproveResult = await token1_canister.icrc2_approve {
+            from_subaccount = null;
+            spender = Principal.fromText(swap_id);
+            amount = amount1Desired;
+            expires_at = null;
+            fee = null;
+            memo = null;
+            created_at_time = null;
+            expected_allowance = null
+        };
+
+        var deposit_call = actor (swap_id) : actor {
+            deposit(tokenId : Principal, value : Nat) : async TxReceipt
+        };
+        let depositToken0 : TxReceipt = await deposit_call.deposit(token0, amount0Desired);
+        switch (depositToken0) {
+            case (#err e) {
+                return e
+            };
+            case (#ok _) {
+                // return "Ok";
+            }
+        };
+
+        let depositToken1 : TxReceipt = await deposit_call.deposit(token1, amount1Desired);
+        switch (depositToken1) {
+            case (#err e) {
+                return e
+            };
+            case (#ok _) {
+                // return "Ok";
+            }
+        };
+        // add lp
+        var canister_call = actor (swap_id) : actor {
+            addLiquidity(token0 : Principal, token1 : Principal, amount0Desired : Nat, amount1Desired : Nat, amount0Min : Nat, amount1Min : Nat, deadline : Int) : async TxReceipt;
+            getPair(token0 : Principal, token1 : Principal) : async ?PairInfoExt
+        };
+
+        var pairId = _getlpTokenId(Principal.toText(token0), Principal.toText(token1));
+        var totalSupply_ = await totalSupply_call(pairId);
+
+        var pre_pair = await canister_call.getPair(token0, token1);
+        var pair = switch (pre_pair) {
+            case (?p) { p };
+            case (_) {
+                return "pair not exist"
+            }
+        };
+
+        var tid0 = Principal.toText(token0);
+        var tid1 = Principal.toText(token1);
+        var amount0 = 0;
+        var amount1 = 0;
+        var amount0D = amount0Desired;
+        var amount1D = amount1Desired;
+        var amount0M = amount0Min;
+        var amount1M = amount1Min;
+        var reserve0 = pair.reserve0;
+        var reserve1 = pair.reserve1;
+        if (tid0 == pair.token1) {
+            amount0D := amount1Desired;
+            amount1D := amount0Desired;
+            amount0M := amount1Min;
+            amount1M := amount0Min
+        };
+
+        if (reserve0 == 0 and reserve1 == 0) {
+            amount0 := amount0D;
+            amount1 := amount1D
+        } else {
+            let amount1Optimal = Utils.quote(amount0D, reserve0, reserve1);
+            if (amount1Optimal <= amount1D) {
+                assert (amount1Optimal >= amount1M);
+                amount0 := amount0D;
+                amount1 := amount1Optimal
+            } else {
+                let amount0Optimal = Utils.quote(amount1D, reserve1, reserve0);
+                assert (amount0Optimal <= amount0D);
+                assert (amount0Optimal >= amount0M);
+                amount0 := amount0Optimal;
+                amount1 := amount1D
+            }
+        };
+
+        var lpAmount = 0;
+        if (totalSupply_ == 0) {
+            lpAmount := Utils.sqrt(amount0 * amount1) - minimum_liquidity;
+            // ignore lptokens.mint(pair.id, blackhole, minimum_liquidity)
+        } else {
+            lpAmount := Nat.min(amount0 * totalSupply_ / reserve0, amount1 * totalSupply_ / reserve1)
+        };
+
+        let addLiquidity_canister_call : TxReceipt = await canister_call.addLiquidity(token0, token1, amount0Desired, amount1Desired, amount0Min, amount1Min, Time.now() +10000000000);
+
+        switch (addLiquidity_canister_call) {
+            case (#err e) {
+                return e
+            };
+            case (#ok _) {
+                var tx = await privateMint(userPId, lpAmount);
+                switch (tx) {
+                    case (#Err error) {
+                        switch (error) {
+                            case (#TimeError) { return "TimeError" };
+                            case (#BadFee { expected_fee }) {
+                                return "BadFee: Expected fee is " # Nat.toText(expected_fee)
+                            };
+                            case (#BadBurn { min_burn_amount }) {
+                                return "BadBurn: Minimum burn amount is " # Nat.toText(min_burn_amount)
+                            };
+                            case (#InsufficientFunds { balance }) {
+                                return "InsufficientFunds: Balance is " # Nat.toText(balance)
+                            };
+                            case (#Duplicate { duplicate_of }) {
+                                return "Duplicate: Duplicate of " # Nat.toText(duplicate_of)
+                            };
+                            case (#TemporarilyUnavailable) {
+                                return "TemporarilyUnavailable"
+                            };
+                            case (#GenericError { error_code; message }) {
+                                return "GenericError: Error code is " # Nat.toText(error_code) # ", Message is " # message
+                            };
+                            case (_) {
+                                return "Error"
+                            }
+                        }
+                    };
+                    case (#Ok _) {
+                        return "Ok"
+                    }
+                }
+                // return "Ok"
+            }
+        }
+    };
+
     public shared (msg) func removeLP(
         token0 : Principal,
         token1 : Principal,

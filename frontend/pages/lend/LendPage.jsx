@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Principal } from '@dfinity/principal';
 import DepositPopup from './popups/Deposit/DepositPopup';
 import WithdrawPopup from './popups/Withdraw/WithdrawPopup';
 import ClaimPopup from './popups/Claim/ClaimPopup';
@@ -7,14 +8,27 @@ import BottomLend from './BottomLend';
 
 import { useAuth } from '../../hooks/use-auth-client';
 
+import ckBTC from '../../assets/ckBTC.png';
+import ckETH from '../../assets/ckETH.png';
+import dckBTC from '../../assets/d.ckBTC.png';
+import dckETH from '../../assets/d.cketh.png';
+import * as deposit0 from '../../../src/declarations/deposit0';
+import * as deposit1 from '../../../src/declarations/deposit1';
+import * as token0 from '../../../src/declarations/token0';
+import * as token1 from '../../../src/declarations/token1';
+
 function LendPage() {
+  const {
+    deposit0Actor, deposit1Actor, principal, token0Actor, token1Actor,
+  } = useAuth();
+
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [switchPage, setSwitchPage] = useState('ckETH');
   const [lockedckETH, setLockedckETH] = useState(0);
-
-  const { depositActor, principal } = useAuth();
+  const [depositActor, setDepositActor] = useState(deposit1Actor);
+  const [tokenActor, setToken0Actor] = useState(token1Actor);
 
   const openDepositModal = () => {
     setIsDepositModalOpen(true);
@@ -39,7 +53,6 @@ function LendPage() {
   const closeClaim = () => {
     setIsClaimOpen(false);
   };
-  console.log('rerender');
   const [wrapBalance, setWrapBalance] = useState();
   const [depositedValue, setDepositedValue] = useState();
   const [tokenBalance, setTokenBalance] = useState();
@@ -49,6 +62,11 @@ function LendPage() {
   const [updateUI, setUpdateUI] = useState(false);
 
   useEffect(() => {
+    setDepositActor(switchPage === 'ckETH' ? deposit1Actor : deposit0Actor);
+    setToken0Actor(switchPage === 'ckETH' ? token1Actor : token0Actor);
+  }, [switchPage, deposit0Actor, deposit1Actor, token0Actor, token1Actor]);
+
+  useEffect(() => {
     const getBalanceUI = async () => {
       if (principal) {
         try {
@@ -56,7 +74,7 @@ function LendPage() {
           setTokenBalance(Number(tx));
           const tx2 = await depositActor.getWrapBalance(principal);
           setWrapBalance(Number(tx2));
-          const tx3 = await depositActor.getInterestUI(principal);
+          const tx3 = await depositActor.getInterestInfo(principal);
           setInterest(Number(tx3));
         } catch (error) {
           console.log(error);
@@ -82,7 +100,7 @@ function LendPage() {
           let totalDeposited = 0;
           const idPromises = originalList.forEach(async (item) => {
             if (item.isActive && (Number((Date.now()) * 10 ** 6 - Number(item.startTime))
-            < Number(item.duration) * 60 * 1000000000)) {
+            < Number(item.duration) * 24 * 60 * 60 * 1000000000)) {
               const value = await fetchCurrentWrap(item);
               const wrapValue = Number(value) / 10 ** decimals;
               totalWrap += Number(wrapValue);
@@ -125,6 +143,9 @@ function LendPage() {
         decimals={decimals}
         tokenBalance={tokenBalance}
         setUpdateUI={setUpdateUI}
+        depositActor={depositActor}
+        tokenActor={tokenActor}
+        btcOrEth={switchPage}
       />
       <WithdrawPopup
         isWithdrawModalOpen={isWithdrawModalOpen}
@@ -132,6 +153,8 @@ function LendPage() {
         decimals={decimals}
         wrapBalance={wrapBalance}
         setUpdateUI={setUpdateUI}
+        depositActor={depositActor}
+        btcOrEth={switchPage}
       />
       <ClaimPopup
         isClaimOpen={isClaimOpen}
@@ -139,6 +162,8 @@ function LendPage() {
         decimals={decimals}
         value={(interest / 10 ** decimals).toFixed(6)}
         setUpdateUI={setUpdateUI}
+        depositActor={depositActor}
+        btcOrEth={switchPage}
       />
       <div className={styles.Container}>
         <div className={styles.Header}>
@@ -149,7 +174,7 @@ function LendPage() {
               className={switchPage === 'ckBTC' ? styles.HeaderSwitchItemOn : styles.HeaderSwitchItemOff}
               onClick={() => setSwitchPage('ckBTC')}
             >
-              <img width={24} height={24} src="/frontend/assets/ckBTC.png" alt="" />
+              <img width={24} height={24} src={ckBTC} alt="" />
               <div>ckBTC</div>
             </button>
             <button
@@ -157,7 +182,7 @@ function LendPage() {
               className={switchPage === 'ckETH' ? styles.HeaderSwitchItemOn : styles.HeaderSwitchItemOff}
               onClick={() => setSwitchPage('ckETH')}
             >
-              <img width={24} height={24} src="/frontend/assets/ckETH.png" alt="" />
+              <img width={24} height={24} src={ckETH} alt="" />
               <div>ckETH</div>
             </button>
           </div>
@@ -167,8 +192,8 @@ function LendPage() {
             <div className={styles.DepositUpper}>
               <div className={styles.TokenDiv}>
                 {switchPage === 'ckETH'
-                  ? <img width={24} height={24} src="/frontend/assets/ckETH.png" alt="" />
-                  : <img width={24} height={24} src="/frontend/assets/ckBTC.png" alt="" />}
+                  ? <img width={24} height={24} src={ckETH} alt="" />
+                  : <img width={24} height={24} src={ckBTC} alt="" />}
                 <div>
                   {' '}
                   {switchPage === 'ckETH' ? 'ckETH' : 'ckBTC'}
@@ -205,8 +230,8 @@ function LendPage() {
             <div className={styles.WithdrawUpper}>
               <div className={styles.TokenDiv}>
                 {switchPage === 'ckETH'
-                  ? <img width={24} height={24} src="/frontend/assets/d.ckETH.png" alt="" />
-                  : <img width={24} height={24} src="/frontend/assets/d.ckBTC.png" alt="" />}
+                  ? <img width={24} height={24} src={dckETH} alt="" />
+                  : <img width={24} height={24} src={dckBTC} alt="" />}
                 <div>
                   {' '}
                   {switchPage === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
@@ -235,22 +260,22 @@ function LendPage() {
             <div className={styles.ClaimUpper}>
               <div className={styles.TokenDiv}>
                 {switchPage === 'ckETH'
-                  ? <img width={24} height={24} src="/frontend/assets/ckETH.png" alt="" />
-                  : <img width={24} height={24} src="/frontend/assets/ckBTC.png" alt="" />}
+                  ? <img width={24} height={24} src={ckETH} alt="" />
+                  : <img width={24} height={24} src={ckBTC} alt="" />}
                 <div>
                   {' '}
                   {switchPage === 'ckETH' ? 'ckETH' : 'ckBTC'}
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ lineHeight: '24px', fontSize: '14px' }}>$0.29</div>
+                <div style={{ lineHeight: '24px', fontSize: '14px' }}>$NaN</div>
                 {interest ? <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{(interest / 10 ** decimals).toFixed(6)}</div>
                   : <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0</div>}
               </div>
             </div>
             <div className={styles.ClaimBottom}>
               <div className={styles.TextTitle}>INTEREST APY (24HRS)</div>
-              <div className={styles.TextTContent}>1.7%</div>
+              <div className={styles.TextTContent}>NaN%</div>
             </div>
             <button type="button" className={styles.ButtonContainer} onClick={openClaim}>
               Claim

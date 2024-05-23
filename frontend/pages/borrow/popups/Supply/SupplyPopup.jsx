@@ -11,6 +11,9 @@ import { useAuth } from '../../../../hooks/use-auth-client';
 
 import * as borrow from '../../../../../src/declarations/borrow';
 
+import ckBTC from '../../../../assets/ckBTC.png';
+import ckETH from '../../../../assets/ckETH.png';
+
 Modal.setAppElement('#root');
 
 const customStyles = {
@@ -37,6 +40,7 @@ function SupplyPopup({
   isSupplyModalOpen,
   closeSupplyModal,
   decimals,
+  isActive,
   tokenBalance,
   setUpdateUI,
 }) {
@@ -44,6 +48,18 @@ function SupplyPopup({
 
   const [amountInput, setAmountInput] = useState();
   const [loading, setLoading] = useState(false);
+  const [quickInputAmountIn, setQuickInputAmountIn] = useState(0);
+
+  const changeAmountIn = (percentage) => {
+    if (tokenBalance && !isActive) {
+      const newAmountIn0 = (percentage * (tokenBalance[2] / 10 ** 18)) / 100;
+      setAmountInput(newAmountIn0);
+      setQuickInputAmountIn(percentage);
+    }
+    if (percentage === quickInputAmountIn) {
+      setQuickInputAmountIn(0);
+    }
+  };
 
   const closeModal = () => {
     closeSupplyModal();
@@ -118,7 +134,7 @@ function SupplyPopup({
           <div className={styles.RightLabel}>
             Balance:
             {' '}
-            {Math.round((tokenBalance[2] / 10 ** 18) * 1000) / 1000}
+            {!isActive ? Math.round((tokenBalance[2] / 10 ** 18) * 1000) / 1000 : 0}
           </div>
         </div>
 
@@ -126,9 +142,9 @@ function SupplyPopup({
           <div className={styles.InputGroup}>
             <div className={styles.IconContainer}>
               <span className={styles.Icon}>
-                <img width={20} height={20} src="/frontend/assets/ckBTC.png" alt="" />
+                <img width={20} height={20} src={ckBTC} alt="" />
                 <div style={{ marginTop: '-3px', color: '#858697', fontWeight: 500 }}>{'<>'}</div>
-                <img width={20} height={20} src="/frontend/assets/ckETH.png" alt="" />
+                <img width={20} height={20} src={ckETH} alt="" />
               </span>
             </div>
             <input
@@ -141,7 +157,7 @@ function SupplyPopup({
             <button
               type="button"
               className={styles.MaxButton}
-              onClick={() => setAmountInput(tokenBalance[2] / 10 ** 18)}
+              onClick={() => setAmountInput(!isActive ? tokenBalance[2] / 10 ** 18 : 0)}
             >
               Max
             </button>
@@ -149,10 +165,10 @@ function SupplyPopup({
         </div>
 
         <div className={styles.SelectContainer}>
-          <button type="button" className={styles.SelectOption}>25%</button>
-          <button type="button" className={styles.SelectOption}>50%</button>
-          <button type="button" className={styles.SelectOption}>75%</button>
-          <button type="button" className={styles.SelectOption}>100%</button>
+          <button className={styles.SelectOption} onClick={() => changeAmountIn(20)} style={{ backgroundColor: quickInputAmountIn === 20 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 20 && 'black' }} type="button">20%</button>
+          <button className={styles.SelectOption} onClick={() => changeAmountIn(50)} style={{ backgroundColor: quickInputAmountIn === 50 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 50 && 'black' }} type="button">50%</button>
+          <button className={styles.SelectOption} onClick={() => changeAmountIn(75)} style={{ backgroundColor: quickInputAmountIn === 75 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 75 && 'black' }} type="button">75%</button>
+          <button className={styles.SelectOption} onClick={() => changeAmountIn(100)} style={{ backgroundColor: quickInputAmountIn === 100 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 100 && 'black' }} type="button">100%</button>
         </div>
       </div>
 
@@ -169,12 +185,14 @@ SupplyPopup.propTypes = {
   closeSupplyModal: PropTypes.func.isRequired,
   setUpdateUI: PropTypes.func.isRequired,
   decimals: PropTypes.number,
-  tokenBalance: PropTypes.number,
+  isActive: PropTypes.bool,
+  tokenBalance: PropTypes.array,
 };
 
 SupplyPopup.defaultProps = {
   decimals: 0,
   tokenBalance: 0,
+  isActive: false,
 };
 
 export default SupplyPopup;

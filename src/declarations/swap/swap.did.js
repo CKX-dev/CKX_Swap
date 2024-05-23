@@ -64,6 +64,7 @@ export const idlFactory = ({ IDL }) => {
   const SwapLastTransaction = IDL.Variant({
     'RemoveLiquidityOutAmount' : IDL.Tuple(IDL.Nat, IDL.Nat),
     'SwapOutAmount' : IDL.Nat,
+    'RemoveLiquidityOneTokenOutAmount' : IDL.Nat,
     'NotFound' : IDL.Bool,
   });
   const TokenInfoWithType = IDL.Record({
@@ -340,6 +341,19 @@ export const idlFactory = ({ IDL }) => {
           IDL.Principal,
           IDL.Principal,
           IDL.Nat,
+          IDL.Nat,
+          IDL.Nat,
+          IDL.Principal,
+          IDL.Int,
+        ],
+        [TxReceipt],
+        [],
+      ),
+    'removeLiquidityOneToken' : IDL.Func(
+        [
+          IDL.Principal,
+          IDL.Principal,
+          IDL.Principal,
           IDL.Nat,
           IDL.Nat,
           IDL.Principal,

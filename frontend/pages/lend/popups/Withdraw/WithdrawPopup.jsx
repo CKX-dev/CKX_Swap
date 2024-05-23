@@ -12,7 +12,13 @@ import { useAuth } from '../../../../hooks/use-auth-client';
 
 // import * as deposit from '../../../../../src/declarations/deposit';
 // import * as token0 from '../../../../../src/declarations/token0';
-import * as deposit from '../../../../../src/declarations/deposit';
+import * as deposit0 from '../../../../../src/declarations/deposit0';
+import * as deposit1 from '../../../../../src/declarations/deposit1';
+
+import dckETH from '../../../../assets/d.cketh.png';
+import ckETH from '../../../../assets/ckETH.png';
+import ckBTC from '../../../../assets/ckBTC.png';
+import dckBTC from '../../../../assets/d.ckBTC.png';
 
 Modal.setAppElement('#root');
 
@@ -42,9 +48,11 @@ function WithdrawPopup({
   decimals,
   wrapBalance,
   setUpdateUI,
+  depositActor,
+  btcOrEth,
 }) {
   const {
-    depositActor, principal,
+    principal,
   } = useAuth();
 
   const [dropdownLock, setDropdownLock] = useState(false);
@@ -53,11 +61,22 @@ function WithdrawPopup({
   const [lock, setLock] = useState('locked');
   const [selectedRows, setSelectedRows] = useState([]);
   const [depositInfo, setDepositInfo] = useState([]);
+  const [quickInputAmountIn, setQuickInputAmountIn] = useState(0);
 
   const [loading, setLoading] = useState(false);
   // const [failList, setFailList] = useState([]);
 
-  console.log(selectedRows);
+  const changeAmountIn = (percentage) => {
+    if (wrapBalance) {
+      const newAmountIn0 = (percentage * (wrapBalance / 10 ** 18)) / 100;
+      setInputBalance(newAmountIn0);
+      setQuickInputAmountIn(percentage);
+    }
+    if (percentage === quickInputAmountIn) {
+      setQuickInputAmountIn(0);
+    }
+  };
+
   const closeModal = () => {
     closeWithdrawModal();
     setDepositInfo([]);
@@ -209,7 +228,7 @@ function WithdrawPopup({
           amount: Number(inputBalance) * 10 ** decimals,
           expected_allowance: [],
           expires_at: [],
-          spender: Principal.fromText(deposit.canisterId),
+          spender: Principal.fromText(btcOrEth === 'ckETH' ? deposit1.canisterId : deposit0.canisterId),
         };
         console.log(Number(inputBalance) * 10 ** decimals);
         const tx0 = await depositActor.icrc2_approve(record);
@@ -218,6 +237,7 @@ function WithdrawPopup({
         const tx = await depositActor.unWrapToken(
           Number(inputBalance) * 10 ** decimals,
         );
+        console.log(tx);
         if ('Ok' in tx) {
           toast.success('Convert successfull');
           closeModal();
@@ -236,6 +256,38 @@ function WithdrawPopup({
         setLoading(false);
       }
     }
+  };
+
+  const calculateUnlockedAmount = () => {
+    if (depositInfo) {
+      let unlockedAmount = 0;
+      depositInfo.forEach((dep) => {
+        const isUnlocked = Number(BigInt(Date.now()) * BigInt(10) ** BigInt(6) - dep.startTime)
+        > Number(dep.duration) * 24 * 60 * 60 * 1000000000;
+        if (isUnlocked && dep.isActive) {
+          unlockedAmount += Number(dep.amount) / 10 ** 18;
+        }
+      });
+      return unlockedAmount.toFixed(2);
+    }
+    return 0;
+  };
+
+  const calculateLockedAmount = () => {
+    if (depositInfo) {
+      let lockedAmount = 0;
+      depositInfo.forEach((dep) => {
+        const isLocked = !(
+          Number(BigInt(Date.now()) * BigInt(10) ** BigInt(6) - dep.startTime)
+            > Number(dep.duration) * 24 * 60 * 60 * 1000000000
+        ) && dep.isActive;
+        if (isLocked) {
+          lockedAmount += Number(dep.amount) / 10 ** 18;
+        }
+      });
+      return lockedAmount.toFixed(2);
+    }
+    return 0;
   };
 
   // const isDone = (timeStamp, duration) => {
@@ -279,9 +331,11 @@ function WithdrawPopup({
               <div style={{ color: 'rgba(133, 134, 151, 1)' }}>UNLOCKED</div>
             </div>
             <div style={{ display: 'flex' }}>
-              <img style={{ marginRight: '4px' }} src="frontend/assets/ckETH.png" width={18} height={18} alt="" />
+              {btcOrEth === 'ckETH' ? <img style={{ marginRight: '4px' }} src={ckETH} width={18} height={18} alt="" />
+                : <img style={{ marginRight: '4px' }} src={ckBTC} width={18} height={18} alt="" />}
+
               <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
-                96.72
+                {calculateUnlockedAmount()}
               </div>
             </div>
           </div>
@@ -296,9 +350,10 @@ function WithdrawPopup({
               <div style={{ color: 'rgba(133, 134, 151, 1)' }}>LOCKED</div>
             </div>
             <div style={{ display: 'flex' }}>
-              <img style={{ marginRight: '4px' }} src="frontend/assets/ckETH.png" width={18} height={18} alt="" />
+              {btcOrEth === 'ckETH' ? <img style={{ marginRight: '4px' }} src={ckETH} width={18} height={18} alt="" />
+                : <img style={{ marginRight: '4px' }} src={ckBTC} width={18} height={18} alt="" />}
               <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
-                96.72
+                {calculateLockedAmount()}
               </div>
             </div>
           </div>
@@ -313,17 +368,40 @@ function WithdrawPopup({
               <div style={{ color: 'rgba(133, 134, 151, 1)' }}>BALANCE</div>
             </div>
             <div style={{ display: 'flex' }}>
-              <img style={{ marginRight: '4px' }} src="frontend/assets/d.ckETH.png" width={18} height={18} alt="" />
+              {btcOrEth === 'ckETH' ? <img style={{ marginRight: '4px' }} src={dckETH} width={18} height={18} alt="" />
+                : <img style={{ marginRight: '4px' }} src={dckBTC} width={18} height={18} alt="" />}
               <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '18px', fontWeight: 500 }}>
                 {wrapBalance / 10 ** 18}
               </div>
             </div>
           </div>
         </div>
-        <div style={{ fontSize: '14px', color: 'rgba(133, 134, 151, 1)' }}>Locked d.ckETH will be withdrawn at 5% fee.</div>
+        <div style={{ fontSize: '14px', color: 'rgba(133, 134, 151, 1)' }}>
+          Locked
+          {' '}
+          {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+          {' '}
+          will be withdrawn at 5% fee.
+        </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          {lock === 'locked' && <div>Locked d.ckETH schedule</div>}
-          {lock === 'unLocked' && <div>UnLocked d.ckETH schedule</div>}
+          {lock === 'locked' && (
+          <div>
+            Locked
+            {' '}
+            {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+            {' '}
+            schedule
+          </div>
+          )}
+          {lock === 'unLocked' && (
+          <div>
+            UnLocked
+            {' '}
+            {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+            {' '}
+            schedule
+          </div>
+          )}
           {lock === 'balance' && <div />}
           {lock !== 'balance' && (
             <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -336,8 +414,18 @@ function WithdrawPopup({
             <table className={styles.LendTable}>
               <thead className={styles.HeaderTable}>
                 <tr className={styles.HeaderLendTable}>
-                  <th>d.ckETH value</th>
-                  <th className={styles.tableSecondChild}>Initial ckETH amount</th>
+                  <th>
+                    {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+                    {' '}
+                    value
+                  </th>
+                  <th className={styles.tableSecondChild}>
+                    Initial
+                    {' '}
+                    {btcOrEth === 'ckETH' ? 'ckETH' : 'ckBTC'}
+                    {' '}
+                    amount
+                  </th>
                   <th>Locked till (Days remaining)</th>
                 </tr>
               </thead>
@@ -351,8 +439,9 @@ function WithdrawPopup({
                     //   && depositInfo[id].isActive) {
                     if (lock === 'locked' && depositInfo[id]
                       // && !isDone(depositInfo[id].startTime, depositInfo[id].duration)
-                      && !(Number((Date.now()) * 10 ** 6 - Number(depositInfo[id].startTime))
-                      > Number(depositInfo[id].duration) * 65 * 1000000000)
+                      && !(Number(BigInt(Date.now()) * BigInt(10) ** BigInt(6)
+                      - (depositInfo[id].startTime))
+                      > Number(depositInfo[id].duration) * 24 * 60 * 60 * 1000000000)
                       && depositInfo[id].isActive) {
                       return (
                         <tr
@@ -378,8 +467,9 @@ function WithdrawPopup({
                       // && calculateNextXDays(Number(depositInfo[id].duration))
                       // === calculateNextXDays(0) && depositInfo[id]
                       // && isDone(depositInfo[id].startTime, depositInfo[id].duration)
-                      && (Number((Date.now()) * 10 ** 6 - Number(depositInfo[id].startTime))
-                      > Number(depositInfo[id].duration) * 65 * 1000000000)
+                      && (Number(BigInt(Date.now()) * BigInt(10) ** BigInt(6)
+                      - (depositInfo[id].startTime))
+                      > Number(depositInfo[id].duration) * 24 * 60 * 60 * 1000000000)
                       && depositInfo[id].isActive) {
                       return (
                         <tr
@@ -423,7 +513,8 @@ function WithdrawPopup({
             <div className={styles.InputGroup}>
               <div className={styles.IconContainer}>
                 <span className={styles.Icon}>
-                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                  {btcOrEth === 'ckETH' ? <img src={ckETH} width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                    : <img src={ckBTC} width={18} height={18} style={{ marginTop: '4px' }} alt="" />}
                 </span>
               </div>
               <input
@@ -478,7 +569,8 @@ function WithdrawPopup({
             <div className={styles.InputGroup}>
               <div className={styles.IconContainer}>
                 <span className={styles.Icon}>
-                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                  {btcOrEth === 'ckETH' ? <img src={ckETH} width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                    : <img src={ckBTC} width={18} height={18} style={{ marginTop: '4px' }} alt="" />}
                 </span>
               </div>
               <input
@@ -533,7 +625,8 @@ function WithdrawPopup({
             <div className={styles.InputGroup}>
               <div className={styles.IconContainer}>
                 <span className={styles.Icon}>
-                  <img src="frontend/assets/ckETH.png" width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                  {btcOrEth === 'ckETH' ? <img src={ckETH} width={18} height={18} style={{ marginTop: '4px' }} alt="" />
+                    : <img src={ckBTC} width={18} height={18} style={{ marginTop: '4px' }} alt="" />}
                 </span>
               </div>
               <input
@@ -587,10 +680,10 @@ function WithdrawPopup({
 
         {lock === 'balance' && (
           <div className={styles.SelectContainer}>
-            <button type="button" className={styles.SelectOption}>25%</button>
-            <button type="button" className={styles.SelectOption}>50%</button>
-            <button type="button" className={styles.SelectOption}>75%</button>
-            <button type="button" className={styles.SelectOption}>100%</button>
+            <button className={styles.SelectOption} onClick={() => changeAmountIn(25)} style={{ backgroundColor: quickInputAmountIn === 25 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 25 && 'black' }} type="button">25%</button>
+            <button className={styles.SelectOption} onClick={() => changeAmountIn(50)} style={{ backgroundColor: quickInputAmountIn === 50 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 50 && 'black' }} type="button">50%</button>
+            <button className={styles.SelectOption} onClick={() => changeAmountIn(75)} style={{ backgroundColor: quickInputAmountIn === 75 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 75 && 'black' }} type="button">75%</button>
+            <button className={styles.SelectOption} onClick={() => changeAmountIn(100)} style={{ backgroundColor: quickInputAmountIn === 100 && 'rgba(126, 135, 255, 1)', color: quickInputAmountIn === 100 && 'black' }} type="button">100%</button>
           </div>
         )}
       </div>
@@ -599,7 +692,17 @@ function WithdrawPopup({
         color: 'rgba(133, 134, 151, 1)', fontSize: '14px', marginTop: '20px', marginBottom: '32px',
       }}
       >
-        d.ckETH will be withdrawn as ckETH 1:1 in your wallet. ckETH does not earn yield
+        {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+        {' '}
+        will be withdrawn as
+        {' '}
+        {btcOrEth === 'ckETH' ? 'ckETH' : 'ckBTC'}
+        {' '}
+        1:1 in your wallet.
+        {' '}
+        {btcOrEth === 'ckETH' ? 'ckETH' : 'ckBTC'}
+        {' '}
+        does not earn yield
       </div>
 
       {lock !== 'balance' && (
@@ -624,6 +727,17 @@ WithdrawPopup.propTypes = {
   decimals: PropTypes.number,
   wrapBalance: PropTypes.number,
   setUpdateUI: PropTypes.func.isRequired,
+  depositActor: PropTypes.shape({
+    withdrawDepositAndInterestArray: PropTypes.func.isRequired,
+    getTokenBalance: PropTypes.func.isRequired,
+    getWrapBalance: PropTypes.func.isRequired,
+    getInterestInfo: PropTypes.func.isRequired,
+    getDepositId: PropTypes.func.isRequired,
+    getCurrentMultiplier: PropTypes.func.isRequired,
+    unWrapToken: PropTypes.func.isRequired,
+    icrc2_approve: PropTypes.func.isRequired,
+  }).isRequired,
+  btcOrEth: PropTypes.string.isRequired,
 };
 
 WithdrawPopup.defaultProps = {

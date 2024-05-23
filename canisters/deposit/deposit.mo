@@ -36,6 +36,7 @@ import Archive "./ICRC1/Canisters/Archive";
 shared (msg) actor class Deposit(
     owner_ : Principal,
     deposit_id : Principal,
+    borrow_id : Principal,
     _name : Text,
     _symbol : Text,
     deposit_token_id : Text,
@@ -127,6 +128,7 @@ shared (msg) actor class Deposit(
 
     private stable var feeTo : Principal = owner_;
     private var depositTransactions = HashMap.HashMap<Principal, DepositSubAccounts>(1, Principal.equal, Principal.hash);
+    private var rewardDepositInfo : [DepositRewardType] = [];
     private stable var depositTransactionsEntries : [(Principal, DepositSubAccounts)] = [];
     private var tokens : Tokens.Tokens = Tokens.Tokens(feeTo, []);
     private stable let depositCounterV2 : Nat = 10000;
@@ -446,8 +448,15 @@ shared (msg) actor class Deposit(
         duration : Nat;
         startTime : Time.Time;
         lastUpdateTime : Nat or Int; // Days
+        lastClaimedTime : Nat or Int;
 
         isActive : Bool
+    };
+
+    type DepositRewardType = {
+        amount : Nat;
+        depositTime : Time.Time;
+        totalShare : Nat;
     };
 
     private var depositInfoCkETH = HashMap.HashMap<Principal, [DepositType]>(1, Principal.equal, Principal.hash);
@@ -467,6 +476,22 @@ shared (msg) actor class Deposit(
         };
         updateInform := Array.append(updateInform, [newDepInform]);
         depositInfoCkETH.put(userPId, updateInform)
+    };
+
+    private func getTotalDckETH() : async Nat {
+        var totalUsersDckETH : Nat = 0;
+        for ((principal, deposits) in depositInfoCkETH.entries()) {
+            var total : Float = 0;
+            for (deposit in deposits.vals()) {
+                let depEle = deposit;
+                let currentMul : Float = await getCurrentMultiplier(depEle);
+                if (deposit.isActive) {
+                  total += currentMul;
+                };
+            };
+            totalUsersDckETH += Nat64.toNat(Int64.toNat64(Float.toInt64(total)));
+        };
+        return totalUsersDckETH;
     };
 
     public shared (msg) func deposit(tokenId : Principal, value : Nat, duration : Nat) : async TxReceipt {
@@ -530,10 +555,32 @@ shared (msg) actor class Deposit(
             startTime = Time.now();
             id = id;
             lastUpdateTime = 0;
-            isActive = true
+            isActive = true;
+            lastClaimedTime = 0;
         };
 
         updateArrayForPrincipal(msg.caller, value, newDepInform);
+
+        var token_canister = actor (tid) : actor {
+            icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
+        };
+
+        var defaultSubaccount : Blob = Utils.defaultSubAccount();
+        var transferArg : ICRC1.TransferArgs = {
+            from_subaccount = null;
+            created_at_time = null;
+            fee = null;
+            memo = null;
+            to = {
+                owner = borrow_id;
+                subaccount = ?defaultSubaccount
+            };
+            amount = value * 60 / 100
+        };
+        var txResult = await token_canister.icrc1_transfer(transferArg);
+
+        Debug.print("transfer lend to borrow");
+        Debug.print(debug_show(txResult));
 
         // var mintValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(firstNum))));
         // let result0 : ICRC1.TransferResult = await privateMint(msg.caller, mintValue);
@@ -582,175 +629,154 @@ shared (msg) actor class Deposit(
     // private var nanosecondsPerDay : Time.Time = 24 * 60 * 60 * 1_000_000_000;
     private var nanosecondsPerDay : Time.Time = 60 * 1_000_000_000;
     var depositID = HashMap.HashMap<Principal, Nat>(10, Principal.equal, Principal.hash);
+    var depositRewardId = HashMap.HashMap<Principal, Nat>(10, Principal.equal, Principal.hash);
     // var isProcessing = HashMap.HashMap<Principal, [Nat]>(1, Principal.equal, Principal.hash);
 
     type InnerMap = HashMap.HashMap<Nat, Bool>;
     type OuterMap = HashMap.HashMap<Principal, InnerMap>;
     let isProcessing : OuterMap = HashMap.HashMap<Principal, InnerMap>(1, Principal.equal, Principal.hash);
 
-    public shared (msg) func withdrawInterest(index : Nat) : async ICRC1.TransferResult {
+    public shared (msg) func depositReward(tokenId : Principal, value : Nat) : async TxReceipt {
+        if (value < 10000) {
+            return #err("Value too small")
+        };
 
-        var maybeArray = depositInfoCkETH.get(msg.caller);
+        let tid : Text = Principal.toText(tokenId);
 
-        switch (maybeArray) {
-            case (?r) {
-                if (r.size() <= index) {
-                    return #Err(#GenericError { error_code = 101; message = "Not found Id" })
-                };
-                if (not r[index].isActive) {
-                    return #Err(#GenericError { error_code = 102; message = "This stake has already withdrawn" })
-                };
+        if (tokens.hasToken(tid) == false) return #err("token not exist");
 
-                // var t1 = r[index].lastUpdateTime;
-                var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
-                var t2 = Time.now();
-                var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
-                var decayPerDay = await getDecayPerDay(r[index]);
-                var updateDay = compareTimestamps(t1, t2);
-                var currentMul : Float = await getCurrentMultiplier(r[index]);
-                var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
-
-                if (currentInterest <= 0) {
-                    return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
-                };
-
-                var withdrawValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(currentInterest))));
-
-                if (updateDay > r[index].duration) {
-                    updateDay := r[index].duration
-                };
-
-                var newDepInform : DepositType = {
-                    id = index;
-                    amount = r[index].amount;
-                    duration = r[index].duration;
-                    firstMultiplier = firstMultiplier;
-                    isActive = true;
-                    lastUpdateTime = updateDay; //updateDay
-                    startTime = r[index].startTime
-                };
-
-                var arrTemp : DepositType = r[index];
-                var updateInform : [DepositType] = [];
-                switch (maybeArray) {
-                    case (?r) {
-                        for (depEle in r.vals()) {
-                            if (arrTemp == depEle) {
-                                updateInform := Array.append(updateInform, [newDepInform])
-                            } else {
-                                updateInform := Array.append(updateInform, [depEle])
-                            }
-                        }
+        let tokenCanister = _getTokenActor(tid);
+        let result = await _transferFrom(tokenCanister, msg.caller, value, tokens.getFee(tid));
+        let txid = switch (result) {
+            case (#Ok(id)) { id };
+            case (#Err(e)) { return #err("token transfer failed:" # tid) };
+            case (#ICRCTransferError(e)) {
+                switch (e) {
+                    case (#BadBurn) { return #err("BadBurn") };
+                    case (#BadFee) { return #err("BadFee") };
+                    case (#CreatedInFuture) { return #err("CreatedInFuture") };
+                    case (#CustomError(text)) {
+                        return #err("CustomError: " # text)
                     };
-                    case (_) {}
-                };
-                // updateInform := Array.append(updateInform, [newDepInform]);
-                if (true) {
-                    depositInfoCkETH.put(msg.caller, updateInform)
-                } else {
-                    depositInfoCkBTC.put(msg.caller, updateInform)
-                };
-                //////// case give ckETH
-                var canister2 = actor (canister_token_ID) : actor {
-                    icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-                };
-                let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
-                    from_subaccount = null;
-                    to = { owner = msg.caller; subaccount = null };
-                    amount = withdrawValue;
-                    memo = null;
-                    fee = null;
-                    created_at_time = null
-                };
-                return tx
-            };
-            case (_) {
-                return #Err(#GenericError { error_code = 202; message = "Not found Id" })
+                    case (#Duplicate) { return #err("Duplicate") };
+                    case (#Expired) { return #err("Expired") };
+                    case (#GenericError) { return #err("GenericError") };
+                    case (#InsufficientAllowance) {
+                        return #err("InsufficientAllowance")
+                    };
+                    case (#InsufficientFunds) {
+                        return #err("InsufficientFunds")
+                    };
+                    case (#TemporarilyUnavailable) {
+                        return #err("TemporarilyUnavailable")
+                    };
+                    case (#TooOld) { return #err("TooOld") }
+                }
             }
-        }
+        };
+        if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
+        ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
+
+        var totalShare = await getTotalDckETH();
+
+        if (totalShare <= 0) {
+          return #err("Err no deposit");
+        };
+
+        var newDepInform : DepositRewardType = {
+            amount = value;
+            depositTime = Time.now();
+            totalShare = totalShare;
+        };
+
+        rewardDepositInfo := Array.append<DepositRewardType>(rewardDepositInfo, [newDepInform]);
+
+        txcounter += 1;
+        return #ok(txcounter - 1)
     };
+
     /////////////////////////////////// FIX THIS ///////////////////////////////////
-    public shared (msg) func privateWithdrawInterest(index : Nat, user : Principal) : async ICRC1.TransferResult {
+    // public shared (msg) func privateWithdrawInterest(index : Nat, user : Principal) : async ICRC1.TransferResult {
 
-        var maybeArray = depositInfoCkETH.get(user);
+    //     var maybeArray = depositInfoCkETH.get(user);
 
-        switch (maybeArray) {
-            case (?r) {
-                if (r.size() <= index) {
-                    return #Err(#GenericError { error_code = 101; message = "Not found Id" })
-                };
-                if (not r[index].isActive) {
-                    return #Err(#GenericError { error_code = 102; message = "This stake has already withdrawn" })
-                };
+    //     switch (maybeArray) {
+    //         case (?r) {
+    //             if (r.size() <= index) {
+    //                 return #Err(#GenericError { error_code = 101; message = "Not found Id" })
+    //             };
+    //             if (not r[index].isActive) {
+    //                 return #Err(#GenericError { error_code = 102; message = "This stake has already withdrawn" })
+    //             };
 
-                // var t1 = r[index].lastUpdateTime;
-                var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
-                var t2 = Time.now();
-                var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
-                var decayPerDay = await getDecayPerDay(r[index]);
-                var updateDay = compareTimestamps(t1, t2);
-                var currentMul : Float = await getCurrentMultiplier(r[index]);
-                var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
+    //             // var t1 = r[index].lastUpdateTime;
+    //             var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
+    //             var t2 = Time.now();
+    //             var firstMultiplier = getFirstMultiplier(r[index].amount, r[index].duration);
+    //             var decayPerDay = await getDecayPerDay(r[index]);
+    //             var updateDay = compareTimestamps(t1, t2);
+    //             var currentMul : Float = await getCurrentMultiplier(r[index]);
+    //             var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, r[index].duration, r[index].lastUpdateTime, r[index].isActive);
 
-                if (currentInterest <= 0) {
-                    return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
-                };
+    //             if (currentInterest <= 0) {
+    //                 return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
+    //             };
 
-                var withdrawValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(currentInterest))));
+    //             var withdrawValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(currentInterest))));
 
-                if (updateDay > r[index].duration) {
-                    updateDay := r[index].duration
-                };
+    //             if (updateDay > r[index].duration) {
+    //                 updateDay := r[index].duration
+    //             };
 
-                var newDepInform : DepositType = {
-                    id = index;
-                    amount = r[index].amount;
-                    duration = r[index].duration;
-                    firstMultiplier = firstMultiplier;
-                    isActive = true;
-                    lastUpdateTime = updateDay; //updateDay
-                    startTime = r[index].startTime
-                };
+    //             var newDepInform : DepositType = {
+    //                 id = index;
+    //                 amount = r[index].amount;
+    //                 duration = r[index].duration;
+    //                 firstMultiplier = firstMultiplier;
+    //                 isActive = true;
+    //                 lastUpdateTime = updateDay; //updateDay
+    //                 startTime = r[index].startTime
+    //             };
 
-                var arrTemp : DepositType = r[index];
-                var updateInform : [DepositType] = [];
-                switch (maybeArray) {
-                    case (?r) {
-                        for (depEle in r.vals()) {
-                            if (arrTemp == depEle) {
-                                updateInform := Array.append(updateInform, [newDepInform])
-                            } else {
-                                updateInform := Array.append(updateInform, [depEle])
-                            }
-                        }
-                    };
-                    case (_) {}
-                };
-                // updateInform := Array.append(updateInform, [newDepInform]);
-                if (true) {
-                    depositInfoCkETH.put(user, updateInform)
-                } else {
-                    depositInfoCkBTC.put(user, updateInform)
-                };
-                //////// case give ckETH
-                var canister2 = actor (canister_token_ID) : actor {
-                    icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult
-                };
-                let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
-                    from_subaccount = null;
-                    to = { owner = user; subaccount = null };
-                    amount = withdrawValue;
-                    memo = null;
-                    fee = null;
-                    created_at_time = null
-                };
-                return tx
-            };
-            case (_) {
-                return #Err(#GenericError { error_code = 202; message = "Not found Id" })
-            }
-        }
-    };
+    //             var arrTemp : DepositType = r[index];
+    //             var updateInform : [DepositType] = [];
+    //             switch (maybeArray) {
+    //                 case (?r) {
+    //                     for (depEle in r.vals()) {
+    //                         if (arrTemp == depEle) {
+    //                             updateInform := Array.append(updateInform, [newDepInform])
+    //                         } else {
+    //                             updateInform := Array.append(updateInform, [depEle])
+    //                         }
+    //                     }
+    //                 };
+    //                 case (_) {}
+    //             };
+    //             // updateInform := Array.append(updateInform, [newDepInform]);
+    //             if (true) {
+    //                 depositInfoCkETH.put(user, updateInform)
+    //             } else {
+    //                 depositInfoCkBTC.put(user, updateInform)
+    //             };
+    //             //////// case give ckETH
+    //             var canister2 = actor (canister_token_ID) : actor {
+    //                 icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult
+    //             };
+    //             let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
+    //                 from_subaccount = null;
+    //                 to = { owner = user; subaccount = null };
+    //                 amount = withdrawValue;
+    //                 memo = null;
+    //                 fee = null;
+    //                 created_at_time = null
+    //             };
+    //             return tx
+    //         };
+    //         case (_) {
+    //             return #Err(#GenericError { error_code = 202; message = "Not found Id" })
+    //         }
+    //     }
+    // };
 
     public func getInterestUI(userId : Principal) : async Float {
         var maybeArray = depositInfoCkETH.get(userId);
@@ -778,62 +804,288 @@ shared (msg) actor class Deposit(
         return totalInterest
     };
 
+    public shared (msg) func privateWithdraw(index : Nat, caller : Principal) : async ICRC1.TransferResult {
+        var maybeArray = depositInfoCkETH.get(caller);
+
+        let outerMap0 = isProcessing.get(caller);
+        switch (outerMap0) {
+            case (null) {
+                /* handle case when the outer map does not contain the key */
+            };
+            case (?innerMap) {
+                let innerValue = innerMap.get(index);
+                switch (innerValue) {
+                    case (null) {
+                        /* handle case when the inner map does not contain the key */
+                    };
+                    case (?value) {
+                        if (value == true) {
+                            return #Err(#GenericError { error_code = 000; message = "This Stake is processing" })
+                        }
+                    }
+                }
+            }
+        };
+
+        switch (maybeArray) {
+            case (?r) {
+                if (r.size() <= index) {
+                    return #Err(#GenericError { error_code = 400; message = "Not found Id" })
+                };
+                if (r[index].isActive == false) {
+                    return #Err(#GenericError { error_code = 404; message = "Already withdrawn" })
+                };
+
+                let outerMap1 = isProcessing.get(caller);
+                switch (outerMap1) {
+                    case (null) {
+                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
+                        newInnerMap.put(index, true);
+                        isProcessing.put(caller, newInnerMap)
+                    };
+                    case (?innerMap) {
+                        innerMap.put(index, true)
+                    }
+                };
+
+                var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
+                var t2 = Time.now();
+                var updateDay = compareTimestamps(t1, t2);
+                assert (updateDay >= 0);
+
+                var duration = r[index].duration;
+                var firstDeposit = r[index].amount;
+
+                if (updateDay >= duration) {
+                    let result : ICRC1.TransferResult = await privateMint(caller, firstDeposit)
+                } else {
+                    var withdrawValue = (firstDeposit * 95 / 100);
+                    var canister2 = actor (canister_token_ID) : actor {
+                        icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
+                        icrc1_balance_of(args : ICRC1.Account) : async ICRC1.Balance
+                    };
+                    var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
+                        sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
+                    };
+                    var defaultSubaccount : Blob = Utils.defaultSubAccount();
+                    let bal : ICRC1.Balance = await canister2.icrc1_balance_of({
+                      owner = Principal.fromActor(this);
+                      subaccount = ?defaultSubaccount
+                    });
+                    if (bal < withdrawValue) {
+                        var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), withdrawValue - bal);
+                        switch (sendTx) {
+                          case (#Ok(txIndex)) {};
+                          case (#Err(transferError)) {
+                            switch (transferError) {
+                                case (#BadFee { expected_fee }) {
+                                    return #Err(#BadFee{ expected_fee});
+                                };
+                                case (#BadBurn { min_burn_amount }) {
+                                    return #Err(#BadBurn{ min_burn_amount});
+                                };
+                                case (#InsufficientFunds { balance }) {
+                                    return #Err(#InsufficientFunds{ balance});
+                                };
+                                case (#TooOld) {
+                                    return #Err(#TooOld);
+                                };
+                                case (#CreatedInFuture { ledger_time }) {
+                                    return #Err(#CreatedInFuture{ ledger_time});
+                                };
+                                case (#Duplicate { duplicate_of }) {
+                                    return #Err(#Duplicate{ duplicate_of});
+                                };
+                                case (#TemporarilyUnavailable) {
+                                    return #Err(#TemporarilyUnavailable);
+                                };
+                                case (#GenericError { error_code; message }) {
+                                    return #Err(#GenericError{ error_code; message});
+                                }
+                            };
+                        };
+                        }
+                    };
+                    let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
+                        from_subaccount = null;
+                        to = { owner = caller; subaccount = null };
+                        amount = withdrawValue;
+                        memo = null;
+                        fee = null;
+                        created_at_time = null
+                    };
+                    switch (tx) {
+                        case (#Err e) {
+                            return #Err(#GenericError { error_code = 998; message = "Failed to transfer" })
+                        };
+                        case (#Ok _) {}
+                    };
+                };
+
+                var decayPerDay = getDecayPerDay(r[index]);
+                var currentMul : Float = await getCurrentMultiplier(r[index]);
+
+                var arrTemp : DepositType = r[index];
+                var updateInform : [DepositType] = [];
+
+                var newDepInform : DepositType = {
+                    id = index;
+                    amount = r[index].amount;
+                    duration = r[index].duration;
+                    firstMultiplier = r[index].firstMultiplier;
+                    isActive = false;
+                    lastUpdateTime = updateDay; //updateDay
+                    startTime = r[index].startTime;
+                    lastClaimedTime = r[index].lastClaimedTime;
+                };
+
+                switch (maybeArray) {
+                    case (?r) {
+                        for (depEle in r.vals()) {
+                            if (arrTemp == depEle) {
+                                updateInform := Array.append(updateInform, [newDepInform])
+                            } else {
+                                updateInform := Array.append(updateInform, [depEle])
+                            }
+                        }
+                    };
+                    case (_) {}
+                };
+                // var isSucces = await privateWithdrawInterest(index, caller);
+                // switch (isSucces) {
+                //     case (#Err e) {
+                //         return isSucces
+                //     };
+                //     case (_) {}
+                // };
+
+                // updateInform := Array.append(updateInform, [newDepInform]);
+                if (true) {
+                    depositInfoCkETH.put(caller, updateInform)
+                } else {
+                    depositInfoCkBTC.put(caller, updateInform)
+                };
+
+                let outerMap2 = isProcessing.get(caller);
+                switch (outerMap2) {
+                    case (null) {
+                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
+                        newInnerMap.put(index, false);
+                        isProcessing.put(caller, newInnerMap)
+                    };
+                    case (?innerMap) {
+                        innerMap.put(index, false)
+                    }
+                }
+            };
+            case (_) {
+                return #Err(#GenericError { error_code = 408; message = "Not found Id" })
+            }
+        };
+        return #Ok(1)
+    };
+
+    public shared (msg) func getInterestInfo(caller : Principal) : async Nat {
+        var maybeArray = depositInfoCkETH.get(caller);
+
+        var totalWithdraw : Nat = 0;
+        switch (maybeArray) {
+            case (?r) {
+                // let indices = Iter.range(0, r.size() -1);
+                for (depEle in r.vals()) {
+                    if (depEle.isActive) {
+                        Debug.print(debug_show(depEle));
+                        for (deposit in rewardDepositInfo.vals()) {
+                            Debug.print(debug_show(deposit));
+                            if (deposit.depositTime > depEle.lastClaimedTime and deposit.depositTime > depEle.startTime) {
+                                var currentMul : Float = await getCurrentMultiplier(depEle);
+                                // var dck = depEle.amount + currentInterest;
+                                // var dck = Nat64.toNat(Int64.toNat64(Float.toInt64(currentMul)));
+                                var dck = currentMul;
+                                var withdrawValue = Float.fromInt(deposit.amount) * (dck / Float.fromInt(deposit.totalShare));
+                                totalWithdraw += Nat64.toNat(Int64.toNat64(Float.toInt64(withdrawValue)));
+                            };
+                        };
+                    }
+                }
+            };
+            case (_) {
+                Debug.print("error");
+                return 0;
+            }
+        };
+
+        return totalWithdraw;
+    };
+
     public shared (msg) func withdrawInterestAll() : async ICRC1.TransferResult {
         var maybeArray = depositInfoCkETH.get(msg.caller);
 
         var totalWithdraw : Nat = 0;
         switch (maybeArray) {
             case (?r) {
-                // let indices = Iter.range(0, r.size() -1);
-
                 for (depEle in r.vals()) {
-                    var t1 = depEle.startTime + depEle.lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
-                    var t2 = Time.now();
-                    var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
-                    var decayPerDay = await getDecayPerDay(depEle);
-                    var updateDay = compareTimestamps(t1, t2);
-                    var currentMul : Float = await getCurrentMultiplier(depEle);
-                    var currentInterest : Float = getInterest(t1, t2, firstMultiplier, decayPerDay, depEle.duration, depEle.lastUpdateTime, depEle.isActive);
+                    var newDepInform : DepositType = {
+                      id = 0;
+                      amount = 0;
+                      duration = 0;
+                      firstMultiplier = 0;
+                      isActive = true;
+                      lastUpdateTime = 0; //updateDay
+                      startTime = 0;
+                      lastClaimedTime = 0;
+                    };
+                    var isChanged = false;
 
-                    if (currentInterest <= 0) {
-                        // return #Err(#GenericError { error_code = 404; message = "current Interest equal zero" })
-                    } else {
-                        var withdrawValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(currentInterest))));
-                        totalWithdraw += withdrawValue;
+                    for (deposit in rewardDepositInfo.vals()) {
+                        if (deposit.depositTime > depEle.lastClaimedTime and deposit.depositTime > depEle.startTime) {
+                            var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
+                            var currentMul : Float = await getCurrentMultiplier(depEle);
+                            // var dck = Nat64.toNat(Int64.toNat64(Float.toInt64(currentMul)));
+                            var dck = currentMul;
+                            var withdrawValue = Float.fromInt(deposit.amount) * (dck / Float.fromInt(deposit.totalShare));
+                            totalWithdraw += Nat64.toNat(Int64.toNat64(Float.toInt64(withdrawValue)));
 
-                        if (updateDay > depEle.duration) {
-                            updateDay := depEle.duration
-                        };
-
-                        var newDepInform : DepositType = {
-                            id = depEle.id;
-                            amount = depEle.amount;
-                            duration = depEle.duration;
-                            firstMultiplier = firstMultiplier;
-                            isActive = true;
-                            lastUpdateTime = updateDay; //updateDay
-                            startTime = depEle.startTime
-                        };
-
-                        var arrTemp : DepositType = depEle;
-                        var updateInform : [DepositType] = [];
-                        switch (maybeArray) {
-                            case (?r) {
-                                for (depEle in r.vals()) {
-                                    if (arrTemp == depEle) {
-                                        updateInform := Array.append(updateInform, [newDepInform])
-                                    } else {
-                                        updateInform := Array.append(updateInform, [depEle])
-                                    }
-                                }
+                            newDepInform := {
+                                id = depEle.id;
+                                amount = depEle.amount;
+                                duration = depEle.duration;
+                                firstMultiplier = firstMultiplier;
+                                isActive = true;
+                                lastUpdateTime = depEle.lastUpdateTime; //updateDay
+                                startTime = depEle.startTime;
+                                lastClaimedTime = if (deposit.depositTime > depEle.lastClaimedTime) {
+                                    deposit.depositTime
+                                } else {
+                                    depEle.lastClaimedTime
+                                };
                             };
-                            case (_) {}
+
+                            isChanged := true;
                         };
-                        if (true) {
-                            depositInfoCkETH.put(msg.caller, updateInform)
-                        } else {
-                            depositInfoCkBTC.put(msg.caller, updateInform)
-                        }
+                        Debug.print("newDepInform");
+                        Debug.print(debug_show(newDepInform));
+                    };
+
+                    var maybeArray = depositInfoCkETH.get(msg.caller);
+                    var arrTemp : DepositType = depEle;
+                    var updateInform : [DepositType] = [];
+                    switch (maybeArray) {
+                        case (?r) {
+                            for (depEle in r.vals()) {
+                                if (arrTemp == depEle and isChanged) {
+                                    updateInform := Array.append(updateInform, [newDepInform])
+                                } else {
+                                    updateInform := Array.append(updateInform, [depEle])
+                                }
+                            }
+                        };
+                        case (_) {}
+                    };
+                    if (true) {
+                        depositInfoCkETH.put(msg.caller, updateInform)
+                    } else {
+                        depositInfoCkBTC.put(msg.caller, updateInform)
                     }
                 }
             };
@@ -853,6 +1105,8 @@ shared (msg) actor class Deposit(
             fee = null;
             created_at_time = null
         };
+
+        Debug.print(debug_show(tx));
 
         //////// case give d.ckETH
         // let result : ICRC1.TransferResult = await privateMint(userId, 1);
@@ -886,143 +1140,6 @@ shared (msg) actor class Deposit(
         };
         let balance : Nat = await icrc1_balance_of(acct);
         return balance
-    };
-
-    public shared (msg) func withdrawDepositAndInterest(index : Nat) : async ICRC1.TransferResult {
-        var maybeArray = depositInfoCkETH.get(msg.caller);
-
-        let outerMap0 = isProcessing.get(msg.caller);
-        switch (outerMap0) {
-            case (null) {
-                /* handle case when the outer map does not contain the key */
-            };
-            case (?innerMap) {
-                let innerValue = innerMap.get(index);
-                switch (innerValue) {
-                    case (null) {
-                        /* handle case when the inner map does not contain the key */
-                    };
-                    case (?value) {
-                        if (value == true) {
-                            return #Err(#GenericError { error_code = 000; message = "This Stake is processing" })
-                        }
-                    }
-                }
-            }
-        };
-
-        switch (maybeArray) {
-            case (?r) {
-                if (r.size() <= index) {
-                    return #Err(#GenericError { error_code = 400; message = "Not found Id" })
-                };
-                if (r[index].isActive == false) {
-                    return #Err(#GenericError { error_code = 404; message = "Already withdrawn" })
-                };
-
-                let outerMap1 = isProcessing.get(msg.caller);
-                switch (outerMap1) {
-                    case (null) {
-                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
-                        newInnerMap.put(index, true);
-                        isProcessing.put(msg.caller, newInnerMap)
-                    };
-                    case (?innerMap) {
-                        innerMap.put(index, true)
-                    }
-                };
-
-                var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
-                var t2 = Time.now();
-                var updateDay = compareTimestamps(t1, t2);
-                assert (updateDay >= 0);
-
-                var duration = r[index].duration;
-                var firstDeposit = r[index].amount;
-
-                if (updateDay >= duration) {
-                    let result : ICRC1.TransferResult = await privateMint(msg.caller, firstDeposit)
-                } else {
-                    var withdrawValue = (firstDeposit * 95 / 100);
-                    var canister2 = actor (canister_token_ID) : actor {
-                        icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-                        // icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
-                    };
-                    // let approve : ICRC1.ApproveResult = await canister2.icrc2_approve {
-                    //     from_subaccount = null;
-                    //     spender = msg.caller;
-                    //     amount = withdrawValue;
-                    //     expires_at = null;
-                    //     fee = null;
-                    //     memo = null;
-                    //     created_at_time = null;
-                    //     expected_allowance = null
-                    // };
-                    let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
-                        from_subaccount = null;
-                        to = { owner = msg.caller; subaccount = null };
-                        amount = withdrawValue;
-                        memo = null;
-                        fee = null;
-                        created_at_time = null
-                    }
-                };
-
-                // var firstMultiplier = await getFirstMultiplier(r[index].amount, r[index].duration);
-                var decayPerDay = getDecayPerDay(r[index]);
-                var currentMul : Float = await getCurrentMultiplier(r[index]);
-
-                var arrTemp : DepositType = r[index];
-                var updateInform : [DepositType] = [];
-
-                var newDepInform : DepositType = {
-                    id = index;
-                    amount = r[index].amount;
-                    duration = r[index].duration;
-                    firstMultiplier = r[index].firstMultiplier;
-                    isActive = false;
-                    lastUpdateTime = updateDay; //updateDay
-                    startTime = r[index].startTime
-                };
-
-                switch (maybeArray) {
-                    case (?r) {
-                        for (depEle in r.vals()) {
-                            if (arrTemp == depEle) {
-                                updateInform := Array.append(updateInform, [newDepInform])
-                            } else {
-                                updateInform := Array.append(updateInform, [depEle])
-                            }
-                        }
-                    };
-                    case (_) {}
-                };
-                var isSucces = await privateWithdrawInterest(index : Nat, msg.caller);
-                // updateInform := Array.append(updateInform, [newDepInform]);
-                if (true) {
-                    depositInfoCkETH.put(msg.caller, updateInform)
-                } else {
-                    depositInfoCkBTC.put(msg.caller, updateInform)
-                };
-
-                let outerMap2 = isProcessing.get(msg.caller);
-                switch (outerMap2) {
-                    case (null) {
-                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
-                        newInnerMap.put(index, false);
-                        isProcessing.put(msg.caller, newInnerMap)
-                    };
-                    case (?innerMap) {
-                        innerMap.put(index, false)
-                    }
-                };
-
-            };
-            case (_) {
-                return #Err(#GenericError { error_code = 408; message = "Not found Id" })
-            }
-        };
-        return #Ok(1)
     };
 
     public shared (msg) func unWrapToken(value : Nat) : async ICRC1.TransferResult {
@@ -1087,6 +1204,7 @@ shared (msg) actor class Deposit(
         var canister2 = actor (canister_token_ID) : actor {
             icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
             // icrc2_approve(args : ICRC1.ApproveArgs) : async ICRC1.ApproveResult
+            icrc1_balance_of(args : ICRC1.Account) : async ICRC1.Balance
         };
         // let approve : ICRC1.ApproveResult = await canister2.icrc2_approve {
         //     from_subaccount = null;
@@ -1098,6 +1216,47 @@ shared (msg) actor class Deposit(
         //     created_at_time = null;
         //     expected_allowance = null
         // };
+        var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
+            sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
+        };
+        let bal : ICRC1.Balance = await canister2.icrc1_balance_of({
+          owner = Principal.fromActor(this);
+          subaccount = ?defaultSubaccount
+        });
+        if (bal < transferValue) {
+            var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), transferValue - bal);
+            switch (sendTx) {
+              case (#Ok(txIndex)) {};
+              case (#Err(transferError)) {
+                switch (transferError) {
+                    case (#BadFee { expected_fee }) {
+                        return #Err(#BadFee{ expected_fee});
+                    };
+                    case (#BadBurn { min_burn_amount }) {
+                        return #Err(#BadBurn{ min_burn_amount});
+                    };
+                    case (#InsufficientFunds { balance }) {
+                        return #Err(#InsufficientFunds{ balance});
+                    };
+                    case (#TooOld) {
+                        return #Err(#TooOld);
+                    };
+                    case (#CreatedInFuture { ledger_time }) {
+                        return #Err(#CreatedInFuture{ ledger_time});
+                    };
+                    case (#Duplicate { duplicate_of }) {
+                        return #Err(#Duplicate{ duplicate_of});
+                    };
+                    case (#TemporarilyUnavailable) {
+                        return #Err(#TemporarilyUnavailable);
+                    };
+                    case (#GenericError { error_code; message }) {
+                        return #Err(#GenericError{ error_code; message});
+                    }
+                };
+            };
+            }
+        };
         let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
             from_subaccount = null;
             to = { owner = msg.caller; subaccount = null };
@@ -1106,6 +1265,7 @@ shared (msg) actor class Deposit(
             fee = null;
             created_at_time = null
         };
+
         return tx
         // return #Ok(1);
     };
@@ -1127,143 +1287,13 @@ shared (msg) actor class Deposit(
         return approve
     };
 
-    public shared (msg) func privateWithdraw(index : Nat, caller : Principal) : async ICRC1.TransferResult {
-        var maybeArray = depositInfoCkETH.get(caller);
-
-        let outerMap0 = isProcessing.get(caller);
-        switch (outerMap0) {
-            case (null) {
-                /* handle case when the outer map does not contain the key */
-            };
-            case (?innerMap) {
-                let innerValue = innerMap.get(index);
-                switch (innerValue) {
-                    case (null) {
-                        /* handle case when the inner map does not contain the key */
-                    };
-                    case (?value) {
-                        if (value == true) {
-                            return #Err(#GenericError { error_code = 000; message = "This Stake is processing" })
-                        }
-                    }
-                }
-            }
-        };
-
-        switch (maybeArray) {
-            case (?r) {
-                if (r.size() <= index) {
-                    return #Err(#GenericError { error_code = 400; message = "Not found Id" })
-                };
-                if (r[index].isActive == false) {
-                    return #Err(#GenericError { error_code = 404; message = "Already withdrawn" })
-                };
-
-                let outerMap1 = isProcessing.get(caller);
-                switch (outerMap1) {
-                    case (null) {
-                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
-                        newInnerMap.put(index, true);
-                        isProcessing.put(caller, newInnerMap)
-                    };
-                    case (?innerMap) {
-                        innerMap.put(index, true)
-                    }
-                };
-
-                var t1 = r[index].startTime + r[index].lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
-                var t2 = Time.now();
-                var updateDay = compareTimestamps(t1, t2);
-                assert (updateDay >= 0);
-
-                var duration = r[index].duration;
-                var firstDeposit = r[index].amount;
-
-                if (updateDay >= duration) {
-                    let result : ICRC1.TransferResult = await privateMint(caller, firstDeposit)
-                } else {
-                    var withdrawValue = (firstDeposit * 95 / 100);
-                    var canister2 = actor (canister_token_ID) : actor {
-                        icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult
-                    };
-                    let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
-                        from_subaccount = null;
-                        to = { owner = caller; subaccount = null };
-                        amount = withdrawValue;
-                        memo = null;
-                        fee = null;
-                        created_at_time = null
-                    }
-                };
-
-                var decayPerDay = getDecayPerDay(r[index]);
-                var currentMul : Float = await getCurrentMultiplier(r[index]);
-
-                var arrTemp : DepositType = r[index];
-                var updateInform : [DepositType] = [];
-
-                var newDepInform : DepositType = {
-                    id = index;
-                    amount = r[index].amount;
-                    duration = r[index].duration;
-                    firstMultiplier = r[index].firstMultiplier;
-                    isActive = false;
-                    lastUpdateTime = updateDay; //updateDay
-                    startTime = r[index].startTime
-                };
-
-                switch (maybeArray) {
-                    case (?r) {
-                        for (depEle in r.vals()) {
-                            if (arrTemp == depEle) {
-                                updateInform := Array.append(updateInform, [newDepInform])
-                            } else {
-                                updateInform := Array.append(updateInform, [depEle])
-                            }
-                        }
-                    };
-                    case (_) {}
-                };
-                // var isSucces = await privateWithdrawInterest(index, caller);
-                // switch (isSucces) {
-                //     case (#Err e) {
-                //         return isSucces
-                //     };
-                //     case (_) {}
-                // };
-                
-                // updateInform := Array.append(updateInform, [newDepInform]);
-                if (true) {
-                    depositInfoCkETH.put(caller, updateInform)
-                } else {
-                    depositInfoCkBTC.put(caller, updateInform)
-                };
-
-                let outerMap2 = isProcessing.get(caller);
-                switch (outerMap2) {
-                    case (null) {
-                        let newInnerMap = HashMap.HashMap<Nat, Bool>(1, Nat.equal, Hash.hash);
-                        newInnerMap.put(index, false);
-                        isProcessing.put(caller, newInnerMap)
-                    };
-                    case (?innerMap) {
-                        innerMap.put(index, false)
-                    }
-                }
-            };
-            case (_) {
-                return #Err(#GenericError { error_code = 408; message = "Not found Id" })
-            }
-        };
-        return #Ok(1)
-    };
-
     public shared (msg) func withdrawDepositAndInterestArray(indexArr : [Nat]) : async [Nat] {
         var indexFail : [Nat] = [];
         var indexSucess : [Nat] = [];
 
         for (index in indexArr.vals()) {
             var tx : ICRC1.TransferResult = await privateWithdraw(index, msg.caller);
+            Debug.print(debug_show(tx));
             switch (tx) {
                 case (#Err _) {
                     indexFail := Array.append(indexFail, [index])

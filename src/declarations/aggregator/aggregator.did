@@ -203,6 +203,8 @@ type Allowance =
 type Aggregator = 
  service {
    addLP: (principal, principal, nat, nat, nat, nat, int) -> (text);
+   addLPForUser: (principal, principal, principal, nat, nat, nat, nat,
+    int) -> (text);
    burn: (BurnArgs) -> (TransferResult);
    caller: () -> (text);
    deposit_cycles: () -> ();

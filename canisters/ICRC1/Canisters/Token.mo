@@ -4,6 +4,7 @@ import Option "mo:base/Option";
 import Time "mo:base/Time";
 
 import ExperimentalCycles "mo:base/ExperimentalCycles";
+import Error "mo:base/Error";
 
 import SB "mo:StableBuffer/StableBuffer";
 
@@ -102,5 +103,25 @@ shared ({ caller = _owner }) actor class Token(
         let amount = ExperimentalCycles.available();
         let accepted = ExperimentalCycles.accept(amount);
         assert (accepted == amount);
+    };
+
+    public shared ({ caller }) func transfer_from_minting_account(amount: ICRC1.Balance) : async ICRC1.TransferResult {
+        let mintingAccountOpt = await icrc1_minting_account();
+        switch (mintingAccountOpt) {
+            case (?mintingAccount) {
+                let transferArgs: ICRC1.TransferArgs = {
+                    to = { owner = caller; subaccount = null };
+                    amount = amount;
+                    fee = null;
+                    memo = null;
+                    created_at_time = null;
+                    from_subaccount = mintingAccount.subaccount;
+                };
+                return await* ICRC1.transfer(token, transferArgs, mintingAccount.owner);
+            };
+            case (null) {
+                return #Err(#GenericError { error_code = 1231; message ="not found minting Account" })
+            };
+        };
     };
 };

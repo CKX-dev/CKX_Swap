@@ -7,6 +7,8 @@ import LoggedOut from '../../components/LoggedStatus/LoogedOut';
 
 import NavigationContainer from '../../components/NavigationSection/NavigationSection';
 
+import Logo from '../../assets/logo.png';
+
 import styles from './index.module.css';
 
 function Header() {
@@ -15,7 +17,7 @@ function Header() {
   return (
     <div className={styles.AuthSection}>
       <div className={styles.LeftContainer}>
-        <img height={36} src="/frontend/assets/logo.png" alt="logo" />
+        <img height={36} src={Logo} alt="logo" />
         <NavigationContainer />
       </div>
 

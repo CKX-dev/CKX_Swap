@@ -79,6 +79,7 @@ type Time = int;
 type SwapLastTransaction = 
  variant {
    NotFound: bool;
+   RemoveLiquidityOneTokenOutAmount: nat;
    RemoveLiquidityOutAmount: record {
                                nat;
                                nat;
@@ -214,6 +215,8 @@ type Swap =
    ///     *   5. update reserve0/reserve1 info of pair
    removeLiquidity: (principal, principal, nat, nat, nat, principal, 
     int) -> (TxReceipt);
+   removeLiquidityOneToken: (principal, principal, principal, nat, nat,
+    principal, int) -> (TxReceipt);
    removeUserFromBlocklist: (principal) -> (bool);
    retryDeposit: (principal) -> (TxReceipt);
    retryDepositTo: (principal, principal, nat) -> (TxReceipt);

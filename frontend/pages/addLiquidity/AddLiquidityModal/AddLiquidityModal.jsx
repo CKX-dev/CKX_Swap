@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import React, { useEffect, useState } from 'react';
 import { toast } from 'react-toastify';
 import Modal from 'react-modal';
@@ -7,7 +8,6 @@ import PropTypes from 'prop-types';
 import { Principal } from '@dfinity/principal';
 import { useAuth } from '../../../hooks/use-auth-client';
 
-// import * as swap from '../../../../src/declarations/swap';
 import * as aggregator from '../../../../src/declarations/aggregator';
 
 import styles from './index.module.css';
@@ -38,7 +38,7 @@ function AddLiquidityModal({
 }) {
   const {
     swapActor, token0Actor, token1Actor,
-    aggregatorActor,
+    aggregatorActor, principal,
   } = useAuth();
 
   const [tokens, setTokens] = useState([]);
@@ -46,10 +46,10 @@ function AddLiquidityModal({
   const [loading, setLoading] = useState(false);
 
   const handleToSymbol = async (t0, t1) => {
-    const token0 = await swapActor.symbol(t0);
-    const token1 = await swapActor.symbol(t1);
+    const tk0 = await swapActor.symbol(t0);
+    const tk1 = await swapActor.symbol(t1);
 
-    setTokens([token0, token1]);
+    setTokens([tk0, tk1]);
   };
 
   // const handleAddLiquidity = async () => {
@@ -147,16 +147,126 @@ function AddLiquidityModal({
   //   }
   // };
 
+  // const handleDeposit = async () => {
+  //   try {
+  //     setLoading(true);
+  //     let res;
+  //     let res2;
+  //     const record = {
+  //       fee: [],
+  //       memo: [],
+  //       from_subaccount: [],
+  //       created_at_time: [],
+  //       amount: Number(formValues.amount0Desired) * 10 ** 18,
+  //       expected_allowance: [],
+  //       expires_at: [],
+  //       spender: Principal.fromText(swap.canisterId),
+  //     };
+  //     const record1 = {
+  //       fee: [],
+  //       memo: [],
+  //       from_subaccount: [],
+  //       created_at_time: [],
+  //       amount: Number(formValues.amount1Desired) * 10 ** 18,
+  //       expected_allowance: [],
+  //       expires_at: [],
+  //       spender: Principal.fromText(swap.canisterId),
+  //     };
+
+  //     if (formValues.token0 === pair[0].token0) {
+  //       await token0Actor.icrc2_approve(record);
+  //       await token1Actor.icrc2_approve(record1);
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token0),
+  //         Number(formValues.amount0Desired) * 10 ** 18,
+  //       );
+
+  //       await swapActor.deposit(
+  //         Principal.fromText(formValues.token1),
+  //         Number(formValues.amount1Desired) * 10 ** 18,
+  //       );
+
+  //       // const timestamp = Math.floor(new Date().getTime() * 10000000000);
+
+  //       // res = await swapActor.addLiquidity(
+  //       //   Principal.fromText(formValues.token0),
+  //       //   Principal.fromText(formValues.token1),
+  //       //   formValues.amount0Desired,
+  //       //   formValues.amount1Desired,
+  //       //   0,
+  //       //   0,
+  //       //   timestamp,
+  //       // );
+  //     } else {
+  //       await token1Actor.icrc2_approve(record);
+  //       await token0Actor.icrc2_approve(record1);
+
+  //       res = await swapActor.deposit(
+  //         Principal.fromText(formValues.token0),
+  //         Number(formValues.amount0Desired) * 10 ** 18,
+  //       );
+
+  //       res2 = await swapActor.deposit(
+  //         Principal.fromText(formValues.token1),
+  //         Number(formValues.amount1Desired) * 10 ** 18,
+  //       );
+
+  //       // const timestamp = Math.floor(new Date().getTime() * 10000000000);
+
+  //       // res = await swapActor.addLiquidity(
+  //       //   Principal.fromText(formValues.token1),
+  //       //   Principal.fromText(formValues.token0),
+  //       //   formValues.amount1Desired,
+  //       //   formValues.amount0Desired,
+  //       //   0,
+  //       //   0,
+  //       //   timestamp,
+  //       // );
+  //     }
+  //     setLoading(false);
+
+  //     closeAddLiquidityModal();
+
+  //     if ('ok' in res && 'ok' in res2) {
+  //       toast.success('Deposit successfully');
+  //     } else if ('ok' in res) {
+  //       console.log('RES: ', res2);
+  //       toast.warn('Deposit fail in token 1 success in token 0');
+  //     } else if ('ok' in res2) {
+  //       console.log('RES: ', res);
+  //       toast.warn('Deposit fail in token 0 success in token 1');
+  //     } else {
+  //       console.log('RES: ', res, ', RES2: ', res2);
+  //       toast.warn('Deposit fail in both token 0 and token 1');
+  //     }
+  //   } catch (e) {
+  //     console.log(e);
+  //     toast.error('Deposit error');
+  //     setLoading(false);
+
+  //     closeAddLiquidityModal();
+  //   }
+  // };
+
   const handleAddLiquidity = async () => {
     try {
       setLoading(true);
       let res;
+      const t0b = await token0Actor.icrc1_balance_of({
+        owner: principal,
+        subaccount: [],
+      });
+      const t1b = await token0Actor.icrc1_balance_of({
+        owner: principal,
+        subaccount: [],
+      });
       const record = {
         fee: [],
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: formValues.amount0Desired * 10 ** 18,
+        amount: t0b,
         expected_allowance: [],
         expires_at: [],
         spender: Principal.fromText(aggregator.canisterId),
@@ -166,7 +276,7 @@ function AddLiquidityModal({
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: formValues.amount1Desired * 10 ** 18,
+        amount: t1b,
         expected_allowance: [],
         expires_at: [],
         spender: Principal.fromText(aggregator.canisterId),
@@ -187,6 +297,8 @@ function AddLiquidityModal({
           0,
           timestamp,
         );
+
+        console.log(res);
       } else {
         await token1Actor.icrc2_approve(record);
         await token0Actor.icrc2_approve(record1);
@@ -202,12 +314,14 @@ function AddLiquidityModal({
           0,
           timestamp,
         );
+
+        console.log(res);
       }
       setLoading(false);
 
       closeAddLiquidityModal();
 
-      if (res.includes('ok') || res.includes('Ok')) {
+      if (res.trim().toLowerCase() === 'ok') {
         toast.success('Liquidity added successfully');
       } else {
         console.log('RES: ', res);

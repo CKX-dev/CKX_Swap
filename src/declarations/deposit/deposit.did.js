@@ -48,6 +48,7 @@ export const idlFactory = ({ IDL }) => {
     'isActive' : IDL.Bool,
     'lastUpdateTime' : IDL.Int,
     'amount' : IDL.Nat,
+    'lastClaimedTime' : IDL.Int,
   });
   const ICRC1SubAccountBalance = IDL.Variant({
     'ok' : IDL.Nat,
@@ -198,6 +199,7 @@ export const idlFactory = ({ IDL }) => {
     'balanceOf' : IDL.Func([IDL.Text, IDL.Principal], [IDL.Nat], ['query']),
     'burn' : IDL.Func([BurnArgs], [TransferResult], []),
     'deposit' : IDL.Func([IDL.Principal, IDL.Nat, IDL.Nat], [TxReceipt], []),
+    'depositReward' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
     'deposit_cycles' : IDL.Func([], [], []),
     'getCurrentMultiplier' : IDL.Func([DepositType], [IDL.Float64], []),
     'getDepositId' : IDL.Func(
@@ -210,6 +212,7 @@ export const idlFactory = ({ IDL }) => {
         [ICRC1SubAccountBalance],
         [],
       ),
+    'getInterestInfo' : IDL.Func([IDL.Principal], [IDL.Nat], []),
     'getInterestUI' : IDL.Func([IDL.Principal], [IDL.Float64], []),
     'getMultiplier' : IDL.Func(
         [Time, Time, IDL.Float64, IDL.Float64, IDL.Nat],
@@ -251,26 +254,14 @@ export const idlFactory = ({ IDL }) => {
     'inc' : IDL.Func([], [IDL.Text], []),
     'mint' : IDL.Func([Mint], [TransferResult], []),
     'privateBurn' : IDL.Func([IDL.Nat], [TransferResult], []),
-    'privateWithdraw' : IDL.Func(
-        [IDL.Nat, IDL.Principal],
-        [TransferResult],
-        [],
-      ),
-    'privateWithdrawInterest' : IDL.Func(
-        [IDL.Nat, IDL.Principal],
-        [TransferResult],
-        [],
-      ),
     'setTokenId' : IDL.Func([IDL.Text], [IDL.Text], []),
     'timeNow' : IDL.Func([], [IDL.Int], []),
     'unWrapToken' : IDL.Func([IDL.Nat], [TransferResult], []),
-    'withdrawDepositAndInterest' : IDL.Func([IDL.Nat], [TransferResult], []),
     'withdrawDepositAndInterestArray' : IDL.Func(
         [IDL.Vec(IDL.Nat)],
         [IDL.Vec(IDL.Nat)],
         [],
       ),
-    'withdrawInterest' : IDL.Func([IDL.Nat], [TransferResult], []),
     'withdrawInterestAll' : IDL.Func([], [TransferResult], []),
   });
   return Deposit;

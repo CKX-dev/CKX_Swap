@@ -10,7 +10,7 @@ function BottomBorrow() {
           <div
             style={{ marginTop: '16px', marginBottom: '16px' }}
           >
-            <span className={styles.LargeNum}>0</span>
+            <span className={styles.LargeNum}>NaN</span>
             <span className={styles.TextToken}>ckBTC</span>
           </div>
           <div className={styles.TextXSmall}>Since 3rd Nov 2024</div>
@@ -20,17 +20,17 @@ function BottomBorrow() {
           <div style={{ display: 'flex', marginTop: '20px' }}>
             <div className={styles.TextCenter}>
               <div>
-                <span className={styles.LargeNum}>0.23</span>
+                <span className={styles.LargeNum}>NaN</span>
                 <span className={styles.TextToken}>ckBTC</span>
               </div>
-              <div className={styles.Value}>$ 5,600</div>
+              <div className={styles.Value}>$ NaN</div>
             </div>
             <div className={styles.TextCenter} style={{ paddingLeft: '24px' }}>
               <div>
-                <span className={styles.LargeNum}>2.5</span>
+                <span className={styles.LargeNum}>NaN</span>
                 <span className={styles.TextToken}>d.ckBTC</span>
               </div>
-              <div className={styles.Value}>$ 5,600</div>
+              <div className={styles.Value}>$ NaN</div>
             </div>
           </div>
         </div>

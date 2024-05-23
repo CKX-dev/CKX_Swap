@@ -163,6 +163,10 @@ export interface Swap {
     [Principal, Principal, bigint, bigint, bigint, Principal, bigint],
     TxReceipt
   >,
+  'removeLiquidityOneToken' : ActorMethod<
+    [Principal, Principal, Principal, bigint, bigint, Principal, bigint],
+    TxReceipt
+  >,
   'removeUserFromBlocklist' : ActorMethod<[Principal], boolean>,
   'retryDeposit' : ActorMethod<[Principal], TxReceipt>,
   'retryDepositTo' : ActorMethod<[Principal, Principal, bigint], TxReceipt>,
@@ -215,6 +219,7 @@ export type SwapLastTransaction = {
     'RemoveLiquidityOutAmount' : [bigint, bigint]
   } |
   { 'SwapOutAmount' : bigint } |
+  { 'RemoveLiquidityOneTokenOutAmount' : bigint } |
   { 'NotFound' : boolean };
 export type Time = bigint;
 export interface TokenAnalyticsInfo {

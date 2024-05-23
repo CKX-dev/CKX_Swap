@@ -1,8 +1,14 @@
 {
   "canisters": {
-    "internet-identity" : {
-      "type": "pull",
-      "id": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+    "internet_identity": {
+      "type": "custom",
+      "candid": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity.did",
+      "wasm": "https://github.com/dfinity/internet-identity/releases/latest/download/internet_identity_dev.wasm.gz",
+      "remote": {
+        "id": {
+          "ic": "rdmx6-jaaaa-aaaaa-aaadq-cai"
+        }
+      }
     },
     "swap": {
       "type": "motoko",
@@ -16,7 +22,11 @@
       "type": "motoko",
       "main": "canisters/ICRC1/Canisters/token.mo"
     },
-    "deposit": {
+    "deposit0": {
+      "type": "motoko",
+      "main": "canisters/deposit/deposit.mo"
+    },
+    "deposit1": {
       "type": "motoko",
       "main": "canisters/deposit/deposit.mo"
     },
@@ -36,7 +46,8 @@
         "entrypoint": "dist/index.html"
       },
       "source": [
-        "dist/"
+        "dist/",
+        "frontend/assets/"
       ],
       "type": "assets"
     }

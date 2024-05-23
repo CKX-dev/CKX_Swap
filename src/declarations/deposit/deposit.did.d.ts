@@ -63,6 +63,7 @@ export interface Deposit {
   'balanceOf' : ActorMethod<[string, Principal], bigint>,
   'burn' : ActorMethod<[BurnArgs], TransferResult>,
   'deposit' : ActorMethod<[Principal, bigint, bigint], TxReceipt>,
+  'depositReward' : ActorMethod<[Principal, bigint], TxReceipt>,
   'deposit_cycles' : ActorMethod<[], undefined>,
   'getCurrentMultiplier' : ActorMethod<[DepositType], number>,
   'getDepositId' : ActorMethod<[Principal], [] | [Array<DepositType>]>,
@@ -70,6 +71,7 @@ export interface Deposit {
     [Principal, string],
     ICRC1SubAccountBalance
   >,
+  'getInterestInfo' : ActorMethod<[Principal], bigint>,
   'getInterestUI' : ActorMethod<[Principal], number>,
   'getMultiplier' : ActorMethod<[Time, Time, number, number, bigint], number>,
   'getPrincipal' : ActorMethod<[], Principal>,
@@ -98,17 +100,13 @@ export interface Deposit {
   'inc' : ActorMethod<[], string>,
   'mint' : ActorMethod<[Mint], TransferResult>,
   'privateBurn' : ActorMethod<[bigint], TransferResult>,
-  'privateWithdraw' : ActorMethod<[bigint, Principal], TransferResult>,
-  'privateWithdrawInterest' : ActorMethod<[bigint, Principal], TransferResult>,
   'setTokenId' : ActorMethod<[string], string>,
   'timeNow' : ActorMethod<[], bigint>,
   'unWrapToken' : ActorMethod<[bigint], TransferResult>,
-  'withdrawDepositAndInterest' : ActorMethod<[bigint], TransferResult>,
   'withdrawDepositAndInterestArray' : ActorMethod<
     [Array<bigint>],
     Array<bigint>
   >,
-  'withdrawInterest' : ActorMethod<[bigint], TransferResult>,
   'withdrawInterestAll' : ActorMethod<[], TransferResult>,
 }
 export interface DepositType {
@@ -119,6 +117,7 @@ export interface DepositType {
   'isActive' : boolean,
   'lastUpdateTime' : bigint,
   'amount' : bigint,
+  'lastClaimedTime' : bigint,
 }
 export interface GetTransactionsRequest { 'start' : TxIndex, 'length' : bigint }
 export interface GetTransactionsRequest__1 {

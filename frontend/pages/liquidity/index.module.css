@@ -24,7 +24,7 @@
   align-items: center;
 
   padding: 24px;
-  height: 144px;
+  /* height: 144px; */
   width: 50%;
 
   box-shadow: none;
@@ -37,6 +37,21 @@
 }
 
 .CardContainer a {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  width: 230px;
+  height: 48px;
+  margin-top: 70px;
+
+  background: linear-gradient(89.44deg, rgb(85, 105, 219) -0.31%, rgb(133, 114, 255) 91.14%);
+  border-radius: 8px;
+  color: white;
+  text-decoration: none;
+}
+
+.Btn {
   display: flex;
   justify-content: center;
   align-items: center;

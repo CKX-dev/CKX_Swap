@@ -15,6 +15,10 @@ export interface Aggregator {
     [Principal, Principal, bigint, bigint, bigint, bigint, bigint],
     string
   >,
+  'addLPForUser' : ActorMethod<
+    [Principal, Principal, Principal, bigint, bigint, bigint, bigint, bigint],
+    string
+  >,
   'burn' : ActorMethod<[BurnArgs], TransferResult>,
   'caller' : ActorMethod<[], string>,
   'deposit_cycles' : ActorMethod<[], undefined>,

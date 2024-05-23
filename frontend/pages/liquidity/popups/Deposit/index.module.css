@@ -1,0 +1,326 @@
+
+.SelectContainer {
+  display: flex;
+  border-radius: 12px;
+  padding: 6px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.TitleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 38px;
+}
+
+.Title {
+  font-family: Inter;
+  font-size: 24px;
+  font-weight: 500;
+  line-height: 38px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+.SubTitle {
+  font-family: Inter;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 17px;
+  letter-spacing: 0em;
+  text-align: left;
+}
+
+.SelectOption {
+  flex: 1;
+  padding: 10px;
+  margin: 0;
+  height: 40px;
+  text-align: center;
+  cursor: pointer;
+  background: inherit;
+  border-radius: 8px;
+  color: #858697;
+  border: 1px solid #2C2D3B;
+}
+
+.SelectOption:hover {
+  background: #232534;
+}
+
+.LabelContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.Label {
+  display: flex;
+  align-items: center;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 19px;
+  letter-spacing: 0em;
+  /* text-align: left; */
+  color: #CCCCCC;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.Label svg {
+  margin-left: 4px;
+}
+
+.CustomSelection {
+  display: flex;
+  justify-content: flex-end;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: #858697;
+}
+
+.BottomContainer {
+  margin-top: 16px;
+}
+
+.RightLabel {
+  font-family: Inter;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 18px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: #858697;
+}
+
+.Active {
+  background-color: #232534;
+  color:#ACB3F9;
+}
+
+.ButtonContainer {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 7px 12px;
+  gap: 6px;
+  width: 100%;
+  height: 48px;
+  background: #20212D;
+  border: 0.5px solid #393B4C;
+  border-radius: 6px;
+  color: #A6ADFA;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.Ellipse {
+  position: absolute;
+  width: 100%;
+  height: 48px;
+  left: 0;
+  top: 38px;
+  background: rgba(126, 135, 255, 0.8);
+  filter: blur(25px);
+}
+
+.CloseButton {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+}
+
+.DropdownIcon {
+  transform: rotate(90deg);
+}
+
+.Label1 {
+  display: flex;
+  align-items: center;
+  font-family: Inter;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 19px;
+  letter-spacing: 0em;
+  text-align: left;
+  color: #FFFFFF;
+}
+
+.InputContainer {
+  position: relative;
+  margin-top: 16px;
+}
+
+.InputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.IconContainer {
+  position: absolute;
+  left: 16px;
+  margin-top: 4px;
+  z-index: 1;
+}
+
+.InputField {
+  height: 60px;
+  width: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  box-sizing: border-box;
+  background-color: #1C1D26;
+  border: 1px solid #2C2D3B;
+  border-radius: 12px;
+  color: #858697;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+}
+
+.InputFieldDeposit {
+  height: 60px;
+  padding: 16px;
+  padding-left: 100px;
+  box-sizing: border-box;
+  background-color: #1C1D26;
+  border: 1px solid #2C2D3B;
+  border-radius: 12px;
+  color: #858697;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  position: relative;
+}
+
+.InputField::placeholder, .InputFieldDeposit::placeholder {
+  color: #858697 !important;
+}
+
+.InputFieldPrincipal {
+  height: 60px;
+  padding: 16px;
+  padding-left: 32px;
+  box-sizing: border-box;
+  background-color: #1C1D26;
+  border: 1px solid #2C2D3B;
+  border-radius: 12px;
+  color: #858697;
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-size: 18px;
+  line-height: 24px;
+  position: relative;
+}
+
+.InputField::placeholder, .InputFieldDeposit::placeholder {
+  color: #858697 !important;
+}
+
+.MaxButton {
+  position: absolute;
+  right: 8px;
+  width: 60px;
+  height: 25px;
+  padding: 0;
+  background-color: #3C3C48;
+  color: #CCCCCC;
+  /* z-index: 2; */
+}
+
+.SelectDuration{
+  position: absolute;
+  left: 8px;
+  top: 80px;
+  width: 60px;
+  height: 25px;
+  padding: 0;
+  background-color: #3C3C48;
+  color: #CCCCCC;
+  width: 100%;
+}
+
+.SelectOption{
+  background-color: #3C3C48;
+  color: #CCCCCC;
+  width: 100%;
+}
+
+.DropDownDuration{
+  position: absolute;
+  left: 8px;
+  /* top: 28px; */
+  cursor: pointer;
+}
+
+.DropDownElements{
+  position: absolute;
+  width: 100%;
+  background-color: #1C1D26;
+  top: 80px;
+  height: 111px;
+  overflow: scroll;
+}
+
+.DropDownElements > button{
+  width: 100%;
+  background-color: #1C1D26;
+  height: 37px;
+  /* border-radius: 12px; */
+  display: flex;
+  justify-content: center;
+  border: 0.5px solid #2C2D3B;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+.DropDownElements > button:hover{
+  background-color: #2C2D3B;
+}
+
+.DropDownElements > button > p{
+  align-self: center;
+}
+
+.TokenSelect {
+  border: none;
+  background-color: transparent;
+  color: inherit;
+}
+
+.TokenOption {
+  background-color: #2C2D3B;
+  color: white;
+}
+
+.TokenOption:hover {
+  background-color: #4E4F5B;
+}
+
+.TransferButton {
+  margin-right: 10px;
+}

@@ -122,7 +122,7 @@ module {
         };
 
         // public func getToken(tokenId: Text): TokenInfoExt {
-            
+
         // };
 
         // public func getTokens(start: Nat, limit: Nat): [TokenInfoExt] {
@@ -178,7 +178,7 @@ module {
 
         public func tokenListWithType(tokenTypes: HashMap.HashMap<Text, Text>) : [TokenInfoWithType] {
             var ret: [TokenInfoWithType] = [];
-            for((k, v) in tokens.entries()) {               
+            for((k, v) in tokens.entries()) {
                 ret := Array.append(ret, [_toTokenInfoWithType(v,tokenTypes.get(k))]);
             };
             return ret;
@@ -233,7 +233,7 @@ module {
                     case (_) {
                         continue l;
                     };
-                };                
+                };
             };
             return ret;
         };
@@ -253,7 +253,7 @@ module {
                             temp := Array.append(temp, [(k, 0)]);
                         };
                     };
-                };                
+                };
             };
             var ret: [(Text, Nat)] = [];
             let limit: Nat = if(start + num > temp.size()) {
@@ -450,7 +450,7 @@ module {
                 case (_) { return 0; };
             };
             return token.totalSupply;
-        };    
+        };
 
         public func name(tokenId: Text) : Text {
             var token = switch (tokens.get(tokenId)) {
@@ -474,6 +474,6 @@ module {
                 case (_) { return ""; };
             };
             return token.symbol;
-        };    
-    };    
+        };
+    };
 };

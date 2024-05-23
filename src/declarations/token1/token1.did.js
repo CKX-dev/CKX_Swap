@@ -224,6 +224,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'mint' : IDL.Func([Mint], [TransferResult], []),
+    'transfer_from_minting_account' : IDL.Func(
+        [Balance__1],
+        [TransferResult],
+        [],
+      ),
   });
   return Token;
 };

@@ -6,10 +6,17 @@ import { toast } from 'react-toastify';
 import { Principal } from '@dfinity/principal';
 import styles from './index.module.css';
 
-import { useAuth } from '../../../../hooks/use-auth-client';
+// import { useAuth } from '../../../../hooks/use-auth-client';
 
-import * as deposit from '../../../../../src/declarations/deposit';
+import * as deposit0 from '../../../../../src/declarations/deposit0';
+import * as deposit1 from '../../../../../src/declarations/deposit1';
 import * as token0 from '../../../../../src/declarations/token0';
+import * as token1 from '../../../../../src/declarations/token1';
+
+import ckETH from '../../../../assets/ckETH.png';
+import dckETH from '../../../../assets/d.cketh.png';
+import ckBTC from '../../../../assets/ckBTC.png';
+import dckBTC from '../../../../assets/d.ckBTC.png';
 
 Modal.setAppElement('#root');
 
@@ -39,9 +46,10 @@ function DepositPopup({
   decimals,
   tokenBalance,
   setUpdateUI,
+  depositActor,
+  tokenActor,
+  btcOrEth,
 }) {
-  const { depositActor, token0Actor } = useAuth();
-
   const [amountInput, setAmountInput] = useState();
   const [dropDownDuration, setDropDownDuration] = useState(false);
   const [selectedOption, setSelectedOption] = useState();
@@ -72,15 +80,15 @@ function DepositPopup({
         amount: Number(amountInput * 10 ** decimals),
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(deposit.canisterId),
+        spender: Principal.fromText(btcOrEth === 'ckETH' ? deposit1.canisterId : deposit0.canisterId),
       };
 
       try {
         setLoading(true);
-        const tx0 = await token0Actor.icrc2_approve(record);
+        const tx0 = await tokenActor.icrc2_approve(record);
         console.log('Approve: ', tx0);
         const tx = await depositActor.deposit(
-          Principal.fromText(token0.canisterId),
+          Principal.fromText(btcOrEth === 'ckETH' ? token1.canisterId : token0.canisterId),
           Number(amountInput * 10 ** decimals),
           Number(selectedOption),
         );
@@ -172,7 +180,10 @@ function DepositPopup({
         <div className={styles.InputContainer}>
           <div className={styles.InputGroup}>
             <div className={styles.IconContainer}>
-              <span className={styles.Icon}><img width={18} height={18} src="frontend/assets/ckETH.png" alt="" /></span>
+              <span className={styles.Icon}>
+                {btcOrEth === 'ckETH' ? <img width={18} height={18} src={ckETH} alt="" />
+                  : <img width={18} height={18} src={ckBTC} alt="" />}
+              </span>
             </div>
             <input
               type="number"
@@ -262,9 +273,16 @@ function DepositPopup({
         )}
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
-        <div style={{ color: 'rgba(133, 134, 151, 1)', fontWeight: 400 }}>Amount of d.ckETH recieved</div>
+        <div style={{ color: 'rgba(133, 134, 151, 1)', fontWeight: 400 }}>
+          Amount of
+          {' '}
+          {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+          {' '}
+          recieved
+        </div>
         <div style={{ display: 'flex' }}>
-          <img width={18} height={18} src="frontend/assets/d.ckETH.png" alt="" />
+          {btcOrEth === 'ckETH' ? <img width={18} height={18} src={dckETH} alt="" />
+            : <img width={18} height={18} src={dckBTC} alt="" />}
           {amountInput && amountReceived(selectedOption) && <div style={{ marginLeft: '8px' }}>{Math.round(amountInput * (amountReceived(selectedOption)) * 1000) / 1000}</div>}
         </div>
       </div>
@@ -272,7 +290,13 @@ function DepositPopup({
         marginTop: '20px', color: 'rgba(133, 134, 151, 1)', fontWeight: 400, fontSize: '14px',
       }}
       >
-        d.ckETH will decay to 1:1 of ckETH deposited at end of lock period for withdrawal
+        {btcOrEth === 'ckETH' ? 'd.ckETH' : 'd.ckBTC'}
+        {' '}
+        will decay to 1:1 of
+        {' '}
+        {btcOrEth === 'ckETH' ? 'ckETH' : 'ckBTC'}
+        {' '}
+        deposited at end of lock period for withdrawal
       </div>
 
       <button type="button" className={styles.ButtonContainer} onClick={submitDeposit} disabled={loading}>
@@ -289,6 +313,22 @@ DepositPopup.propTypes = {
   decimals: PropTypes.number,
   tokenBalance: PropTypes.number,
   setUpdateUI: PropTypes.func.isRequired,
+  depositActor: PropTypes.shape({
+    withdrawDepositAndInterestArray: PropTypes.func.isRequired,
+    getTokenBalance: PropTypes.func.isRequired,
+    getWrapBalance: PropTypes.func.isRequired,
+    getInterestInfo: PropTypes.func.isRequired,
+    getDepositId: PropTypes.func.isRequired,
+    getCurrentMultiplier: PropTypes.func.isRequired,
+    unWrapToken: PropTypes.func.isRequired,
+    icrc2_approve: PropTypes.func.isRequired,
+    withdrawInterestAll: PropTypes.func.isRequired,
+    deposit: PropTypes.func.isRequired,
+  }).isRequired,
+  tokenActor: PropTypes.shape({
+    icrc2_approve: PropTypes.func.isRequired,
+  }).isRequired,
+  btcOrEth: PropTypes.string.isRequired,
 };
 
 DepositPopup.defaultProps = {

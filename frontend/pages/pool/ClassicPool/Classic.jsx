@@ -9,6 +9,8 @@ import Overview from './Overview/Overview';
 import MyPosition from './MyPosition/MyPosition';
 import Deposit from './Deposit/Deposit';
 import Withdraw from './Withdraw/Withdraw';
+import AddLiquidityPage from './addLiquidity/AddLiquidityPage';
+// import Faucet from '../../faucet/Faucet';
 
 function Classic() {
   const [menu, setMenu] = useState('Overview');
@@ -27,24 +29,34 @@ function Classic() {
             <OverviewIcon />
             <div>Overview</div>
           </div>
-          <div className={`${styles.buttonMenu} ${menu === 'MyPosition' && styles.selectedButton}`} onClick={() => setMenu('MyPosition')}>
+          {/* <div className={`${styles.buttonMenu} ${menu === 'MyPosition' && styles.selectedButton}`} onClick={() => setMenu('MyPosition')}>
             <MyPositionIcon />
             <div>My Position</div>
-          </div>
-          <div className={`${styles.buttonMenu} ${menu === 'Deposit' && styles.selectedButton}`} onClick={() => setMenu('Deposit')}>
+          </div> */}
+          {/* <div className={`${styles.buttonMenu} ${menu === 'Deposit' && styles.selectedButton}`} onClick={() => setMenu('Deposit')}>
             <DepositIcon />
+            <div>Deposit</div>
+          </div> */}
+          <div className={`${styles.buttonMenu} ${menu === 'Liquidity' && styles.selectedButton}`} onClick={() => setMenu('Liquidity')}>
+            <MyPositionIcon />
             <div>Deposit</div>
           </div>
           <div className={`${styles.buttonMenu} ${menu === 'Withdraw' && styles.selectedButton}`} onClick={() => setMenu('Withdraw')}>
             <WithdrawIcon />
             <div>Withdraw</div>
           </div>
+          {/* <div className={`${styles.buttonMenu} ${menu === 'Faucet' && styles.selectedButton}`} onClick={() => setMenu('Faucet')}>
+            <DepositIcon />
+            <div>Faucet</div>
+          </div> */}
         </div>
         <div className={styles.RightContent}>
           {menu === 'Overview' && <Overview />}
-          {menu === 'MyPosition' && <MyPosition />}
-          {menu === 'Deposit' && <Deposit />}
+          {/* {menu === 'MyPosition' && <MyPosition />} */}
+          {/* {menu === 'Deposit' && <Deposit />} */}
           {menu === 'Withdraw' && <Withdraw />}
+          {menu === 'Liquidity' && <AddLiquidityPage />}
+          {/* {menu === 'Faucet' && <Faucet />} */}
         </div>
       </div>
     </div>

@@ -7,6 +7,8 @@ import * as Yup from 'yup';
 import { Principal } from '@dfinity/principal';
 
 import { useAuth } from '../../hooks/use-auth-client';
+import * as token0 from '../../../src/declarations/token0';
+import * as token1 from '../../../src/declarations/token1';
 
 import SelectTokenModal from './SelectTokenModal/SelectTokenModal';
 
@@ -16,7 +18,9 @@ import styles from './index.module.css';
 import AddLiquidityModal from './AddLiquidityModal/AddLiquidityModal';
 
 function AddLiquidityPage() {
-  const { swapActor, principal } = useAuth();
+  const {
+    swapActor, principal, token0Actor, token1Actor, identity,
+  } = useAuth();
   const navigation = useNavigate();
   const validation = useFormik({
     initialValues: {
@@ -184,17 +188,36 @@ function AddLiquidityPage() {
 
   useEffect(() => {
     const handleGetUserBalances = async () => {
-      const res = await swapActor.getUserBalances(principal);
-      const token0Balance = res.find((balance) => balance[0] === validation.values.token0);
-      const token1Balance = res.find((balance) => balance[0] === validation.values.token1);
+      const token0ActorForSelectedToken = token0.createActor(validation.values.token0, {
+        agentOptions: {
+          identity,
+        },
+      });
 
-      setUserBalances([token0Balance[1], token1Balance[1]]);
+      const token1ActorForSelectedToken = token1.createActor(validation.values.token1, {
+        agentOptions: {
+          identity,
+        },
+      });
+
+      const token0Balance = await token0ActorForSelectedToken.icrc1_balance_of({
+        owner: principal,
+        subaccount: [],
+      });
+      const token1Balance = await token1ActorForSelectedToken.icrc1_balance_of({
+        owner: principal,
+        subaccount: [],
+      });
+
+      setUserBalances([token0Balance, token1Balance]);
     };
 
-    if (swapActor && principal && validation.values.token0 && validation.values.token1) {
+    if (swapActor && principal && validation.values.token0
+      && validation.values.token1 && token0Actor && token1Actor) {
       handleGetUserBalances();
     }
-  }, [swapActor, principal, validation.values.token0, validation.values.token1]);
+  }, [swapActor, principal, validation.values.token0, validation.values.token1,
+    token0Actor, token1Actor]);
 
   return (
     <div className={styles.PageContainer}>
@@ -233,11 +256,9 @@ function AddLiquidityPage() {
                   type="number"
                   id="amount0Desired"
                   name="amount0Desired"
-                  placeholder="0.0"
                   onChange={validation.handleChange}
                   onBlur={validation.handleBlur}
                   value={validation.values.amount0Desired || 0}
-                  disabled={!bothTokensSelected}
                 />
                 {validation.touched.amount0Desired && validation.errors.amount0Desired && (
                 <div>{validation.errors.amount0Desired}</div>
@@ -245,7 +266,8 @@ function AddLiquidityPage() {
                 <p>
                   Balance:
                   {' '}
-                  {userBalances[0] ? Number(userBalances[0]) : 0}
+                  {userBalances[0]
+                    ? Math.round((Number(userBalances[0]) / 10 ** 18) * 1000) / 1000 : 0}
                 </p>
               </div>
 
@@ -258,7 +280,6 @@ function AddLiquidityPage() {
                   type="number"
                   id="amount1Desired"
                   name="amount1Desired"
-                  placeholder="0.0"
                   onChange={validation.handleChange}
                   onBlur={validation.handleBlur}
                   value={validation.values.amount1Desired || 0}
@@ -270,7 +291,8 @@ function AddLiquidityPage() {
                 <p>
                   Balance:
                   {' '}
-                  {userBalances[1] ? Number(userBalances[1]) : 0}
+                  {userBalances[1]
+                    ? Math.round((Number(userBalances[1]) / 10 ** 18) * 1000) / 1000 : 0}
                 </p>
               </div>
             </div>
@@ -282,7 +304,7 @@ function AddLiquidityPage() {
               <p>
                 Current Price:
                 {' '}
-                {Math.round(price * 1000) / 1000}
+                {(price || 0).toFixed(6)}
                 {' '}
                 <span>
                   {selectedToken1Name || '--'}
@@ -296,7 +318,7 @@ function AddLiquidityPage() {
                 type="number"
                 name="minPrice"
                 placeholder="Min Price"
-                value={Math.round(priceMin * 1000) / 1000 || 0}
+                value={(priceMin || 0).toFixed(6)}
                 onChange={(e) => setPriceMin(parseFloat(e.target.value))}
                 disabled={!bothTokensSelected}
               />
@@ -305,7 +327,7 @@ function AddLiquidityPage() {
                 type="number"
                 name="maxPrice"
                 placeholder="Max Price"
-                value={Math.round(priceMax * 1000) / 1000 || 0}
+                value={(priceMax || 0).toFixed(6)}
                 onChange={(e) => setPriceMax(parseFloat(e.target.value))}
                 disabled={!bothTokensSelected}
               />

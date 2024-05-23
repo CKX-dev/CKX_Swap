@@ -1,0 +1,183 @@
+.Container {
+  width: 80%;
+  margin: auto;
+  line-height: 24px;
+  margin-top: 100px;
+}
+
+.Header {
+  color: rgba(255, 255, 255, 1);
+  font-size: 24px;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+}
+
+.HeaderSwitch{
+  border-radius: 10px;
+  padding: 6px;
+  gap: 6px;
+  background-color: rgba(28, 29, 38, 1);
+  display: flex;
+  font-size: 16px;
+  min-width: 210px;
+  justify-content: space-between;
+  margin: 0;
+}
+
+.HeaderSwitchItemOn{
+  display: flex;
+  gap: 6px;
+  border-radius: 8px;
+  background-color: rgba(35, 37, 52, 1);
+  padding: 8px 0px 8px 0px;
+  min-width: 100px;
+  justify-content: center;
+  cursor: pointer;
+  margin: 0;
+  color: rgba(204, 204, 204, 1)
+}
+
+.HeaderSwitchItemOff{
+  display: flex;
+  gap: 6px;
+  padding: 8px 0px 8px 0px;
+  min-width: 100px;
+  justify-content: center;
+  color: rgba(133, 134, 151, 1);
+  cursor: pointer;
+  background: rgba(28, 29, 38, 1);
+  margin: 0;
+}
+
+.HeaderSwitchItemOn > div, img {
+  align-self: center;
+}
+
+.HeaderSwitchItemOff > div, img {
+  align-self: center;
+}
+
+.firstTable{
+  margin-top:32px;
+  display: flex;
+  padding-top: 30px;
+  padding-bottom: 30px;
+  border-top: 1px solid rgba(44, 45, 59, 1);
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+  justify-content: space-around;
+  color: rgba(133, 134, 151, 1);
+}
+
+.firstTable > div {
+  width: 33%;
+}
+
+.Deposit{
+  padding-right: 4.4%;
+  border-right: 1px solid rgba(44, 45, 59, 1);
+}
+
+.Withdraw{
+  padding-left: 4.4%;
+  padding-right: 4.4%;
+  border-right: 1px solid rgba(44, 45, 59, 1);
+}
+
+.Claim{
+  padding-left: 4.4%;
+}
+
+.DepositUpper, .WithdrawUpper, .ClaimUpper{
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(44, 45, 59, 1);
+  display: flex;
+  justify-content: space-between;
+}
+
+.DepositBottom, .WithdrawBottom, .ClaimBottom{
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.TokenDiv{
+  padding: 12px 18px 12px 18px;
+  border-radius: 12px;
+  background-color: rgba(28, 29, 38, 1);
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  color: rgba(204, 204, 204, 1);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.TokenDiv > div, img{
+  align-self: center
+}
+
+.TextTitle{
+  color: rgba(133, 134, 151, 1);
+  font-size: 14px;
+}
+
+.TextTContent{
+  color: rgba(204, 204, 204, 1);
+  font-size: 14px;
+}
+
+.ButtonContainer {
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 7px 12px;
+  gap: 6px;
+  width: 100%;
+  height: 48px;
+  background: #20212D;
+  border: 0.5px solid #393B4C;
+  border-radius: 6px;
+  color: #A6ADFA;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.Ellipse {
+  position: absolute;
+  width: 100%;
+  height: 48px;
+  left: 0;
+  top: 38px;
+  background: rgba(126, 135, 255, 0.8);
+  filter: blur(25px);
+}
+
+.BottomRight{
+  border-radius: 12px;
+  background-color: rgba(28, 29, 38, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding:20px;
+  height: 244px;
+  box-sizing: border-box;
+}
+
+.BottomLeft{
+  height: 244px;
+  box-sizing: border-box;
+}
+
+.TextXSmall {
+  color: #CCCCCC;
+  font-weight: 300;
+  font-size: 12px;
+}

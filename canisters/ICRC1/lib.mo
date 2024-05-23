@@ -335,8 +335,8 @@ module {
         };
 
         let normal_tx_kind = #transfer;
-        let tx_req = Utils.create_transfer_req(normal_transfer_args, 
-            args.from_subaccount.owner, 
+        let tx_req = Utils.create_transfer_req(normal_transfer_args,
+            args.from_subaccount.owner,
             normal_tx_kind
         );
 

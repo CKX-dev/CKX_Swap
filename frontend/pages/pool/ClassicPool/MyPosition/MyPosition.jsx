@@ -4,6 +4,9 @@ import {
 } from '../Utils';
 import styles from './index.module.css';
 
+import ckBTC from '../../../../assets/ckBTC.png';
+import ckETH from '../../../../assets/ckETH.png';
+
 function MyPosition() {
   return (
     <div>
@@ -30,7 +33,7 @@ function MyPosition() {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '18px' }}>
           <div style={{ display: 'flex', gap: '12px' }}>
             <FiftyPercent />
-            <img src="/frontend/assets/ckBTC.png" width={24} height={24} alt="" />
+            <img src={ckBTC} width={24} height={24} alt="" />
             <div>ckBTC</div>
           </div>
           <div>17,003,450.69 USDC</div>
@@ -38,7 +41,7 @@ function MyPosition() {
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
           <div style={{ display: 'flex', gap: '12px' }}>
             <FiftyPercent />
-            <img src="/frontend/assets/ckETH.png" width={24} height={24} alt="" />
+            <img src={ckETH} width={24} height={24} alt="" />
             <div>ckETH</div>
           </div>
           <div>17,003,450.69 USDC</div>
@@ -105,7 +108,7 @@ function MyPosition() {
             <div className={styles.BoxElement}>
               {/* <div>ckBTC $0.99</div> */}
               <div style={{ display: 'flex', gap: '4px' }}>
-                <img src="/frontend/assets/ckBTC.png" width={24} height={24} alt="" />
+                <img src={ckBTC} width={24} height={24} alt="" />
                 <div>ckBTC</div>
                 <div>$0.99</div>
               </div>
@@ -113,7 +116,7 @@ function MyPosition() {
             </div>
             <div className={styles.BoxElement}>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <img src="/frontend/assets/ckETH.png" width={24} height={24} alt="" />
+                <img src={ckETH} width={24} height={24} alt="" />
                 <div>ckETH</div>
                 <div>$1,156.07</div>
               </div>
@@ -135,14 +138,14 @@ function MyPosition() {
             <div className={styles.BoxElement}>
               {/* <div>ckBTC $0.99</div> */}
               <div style={{ display: 'flex', gap: '4px' }}>
-                <img src="/frontend/assets/ckBTC.png" width={24} height={24} alt="" />
+                <img src={ckBTC} width={24} height={24} alt="" />
                 <div>ckBTC</div>
               </div>
               <div style={{ color: 'rgba(131, 189, 103, 1)' }}>+20.12</div>
             </div>
             <div className={styles.BoxElement}>
               <div style={{ display: 'flex', gap: '4px' }}>
-                <img src="/frontend/assets/ckETH.png" width={24} height={24} alt="" />
+                <img src={ckETH} width={24} height={24} alt="" />
                 <div>ckETH</div>
               </div>
               <div style={{ color: 'rgba(131, 189, 103, 1)' }}>+0.009</div>

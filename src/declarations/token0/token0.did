@@ -129,6 +129,7 @@ type Token =
    icrc2_approve: (ApproveArgs) -> (ApproveResult);
    icrc2_transfer_from: (TransferFromArgs) -> (TransferFromResult);
    mint: (Mint) -> (TransferResult);
+   transfer_from_minting_account: (Balance__1) -> (TransferResult);
  };
 type Timestamp = nat64;
 type SupportedStandard = 

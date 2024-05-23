@@ -1,7 +1,7 @@
 module {
   public type DetailValue = {
     #I64 : Int64;
-    #U64 : Nat64;
+    #U : Nat;
     #Vec : [DetailValue];
     #Slice : [Nat8];
     #Text : Text;

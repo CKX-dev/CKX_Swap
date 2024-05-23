@@ -6,6 +6,7 @@ export const LOCATION = {
   PORFOLIO: '/porfolio',
   BRIDGE: '/bridge',
   LEADERBOARD: '/leaderboard',
+  FAUCET: '/faucet',
   LIQUIDITY: '/swap/liquidity',
   ADD_LIQUIDITY: '/swap/liquidity/add',
 };

@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import React, { useState } from 'react';
 import Modal from 'react-modal';
 
@@ -11,7 +12,7 @@ import { useAuth } from '../../../../hooks/use-auth-client';
 
 import * as borrow from '../../../../../src/declarations/borrow';
 import * as token0 from '../../../../../src/declarations/token0';
-// import * as token1 from '../../../../../src/declarations/token1';
+import * as token1 from '../../../../../src/declarations/token1';
 
 Modal.setAppElement('#root');
 
@@ -65,7 +66,7 @@ function RepayPopup({
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: Number(borrowInfo.borrow) * 1.1,
+        amount: Number(borrowInfo.borrow) * 1.5,
         expected_allowance: [],
         expires_at: [],
         spender: Principal.fromText(borrow.canisterId),
@@ -74,12 +75,12 @@ function RepayPopup({
       try {
         setLoading(true);
         let tokenIdPay = token0Actor;
-        if (borrowInfo.tokenIdBorrow === token0.canisterId) {
+        if (borrowInfo.tokenIdBorrow.toText() === token0.canisterId) {
           tokenIdPay = token0Actor;
         } else {
           tokenIdPay = token1Actor;
         }
-        const tx0 = await token0Actor.icrc2_approve(record);
+        const tx0 = await tokenIdPay.icrc2_approve(record);
         console.log('Approve: ', tx0);
         const tx = await borrowActor.rePay();
         console.log(tx);
@@ -137,7 +138,13 @@ function RepayPopup({
           && ((Number(borrowInfo.borrow) / 10 ** 18))}
         </span>
         &nbsp;
-        ckBTC
+        {borrowInfo
+            && borrowInfo.tokenIdBorrow
+            && borrowInfo.tokenIdBorrow.toText() === token0.canisterId
+          ? 'ckBTC' : borrowInfo
+              && borrowInfo.tokenIdBorrow
+              && borrowInfo.tokenIdBorrow.toText() === token1.canisterId
+            ? 'ckETH' : '-'}
       </div>
 
       <button type="button" className={styles.ButtonContainer} onClick={submitRepay}>

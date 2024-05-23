@@ -2,6 +2,9 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import styles from './index.module.css';
 
+import ckBTC from '../../assets/d.ckBTC.png';
+import ckETH from '../../assets/d.cketh.png';
+
 function BottomLend(
   { switchPage },
 ) {
@@ -22,7 +25,7 @@ function BottomLend(
                 interest:
               </span>
               {' '}
-              <span style={{ color: 'rgba(126, 135, 255, 1)', fontSize: '24px' }}>0.0001673%</span>
+              <span style={{ color: 'rgba(126, 135, 255, 1)', fontSize: '24px' }}>NaN%</span>
             </div>
             <div style={{ display: 'flex', marginTop: '4px' }}>
               <span style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>Learn more</span>
@@ -41,9 +44,9 @@ function BottomLend(
 
             </div>
             <div style={{ display: 'flex', justifyContent: 'end', gap: '10px' }}>
-              {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
-                : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
-              <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>17,973,373.37</div>
+              {switchPage === 'ckETH' ? <img width={32} height={32} src={ckETH} alt="" />
+                : <img width={32} height={32} src={ckBTC} alt="" />}
+              <div style={{ color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>NaN</div>
             </div>
           </div>
         </div>
@@ -74,9 +77,9 @@ function BottomLend(
                 color: 'rgba(204, 204, 204, 1)', fontSize: '24px', display: 'flex', gap: '10px', justifyContent: 'end',
               }}
               >
-                {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
-                  : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
-                <div style={{ marginTop: '4px', fontWeight: 500 }}>96.72</div>
+                {switchPage === 'ckETH' ? <img width={32} height={32} src={ckETH} alt="" />
+                  : <img width={32} height={32} src={ckBTC} alt="" />}
+                <div style={{ marginTop: '4px', fontWeight: 500 }}>NaN</div>
               </div>
             </div>
             <div style={{
@@ -94,9 +97,9 @@ function BottomLend(
                 color: 'rgba(204, 204, 204, 1)', fontSize: '24px', display: 'flex', gap: '10px', justifyContent: 'end',
               }}
               >
-                {switchPage === 'ckETH' ? <img width={32} height={32} src="/frontend/assets/d.ckETH.png" alt="" />
-                  : <img width={32} height={32} src="/frontend/assets/d.ckBTC.png" alt="" />}
-                <div style={{ marginTop: '4px', fontWeight: 500 }}>96.72</div>
+                {switchPage === 'ckETH' ? <img width={32} height={32} src={ckETH} alt="" />
+                  : <img width={32} height={32} src={ckBTC} alt="" />}
+                <div style={{ marginTop: '4px', fontWeight: 500 }}>NaN</div>
               </div>
             </div>
           </div>
@@ -111,7 +114,7 @@ function BottomLend(
           }}
           >
             <div style={{ color: 'rgba(133, 134, 151, 1)', fontSize: '14px' }}>GLOBAL AVERAGE LOCK TIME</div>
-            <div style={{ textAlign: 'right', color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>433 days</div>
+            <div style={{ textAlign: 'right', color: 'rgba(204, 204, 204, 1)', fontSize: '24px' }}>NaN days</div>
           </div>
         </div>
       </div>

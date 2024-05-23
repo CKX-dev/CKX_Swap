@@ -115,6 +115,7 @@ export interface Token {
   'icrc2_approve' : ActorMethod<[ApproveArgs], ApproveResult>,
   'icrc2_transfer_from' : ActorMethod<[TransferFromArgs], TransferFromResult>,
   'mint' : ActorMethod<[Mint], TransferResult>,
+  'transfer_from_minting_account' : ActorMethod<[Balance__1], TransferResult>,
 }
 export interface TokenInitArgs {
   'fee' : Balance,
