@@ -11,6 +11,8 @@ import { useAuth } from '../../../hooks/use-auth-client';
 import * as swap from '../../../../src/declarations/swap';
 import * as token0 from '../../../../src/declarations/token0';
 import * as token1 from '../../../../src/declarations/token1';
+import * as deposit0 from '../../../../src/declarations/deposit0';
+import * as deposit1 from '../../../../src/declarations/deposit1';
 import { getAmountOutMin } from '../../../utils';
 import styles from './index.module.css';
 
@@ -40,7 +42,7 @@ function SwapModal({
   clearAll,
 }) {
   const {
-    principal, swapActor, identity, token0Actor, token1Actor,
+    principal, swapActor, identity,
   } = useAuth();
 
   const [tokens, setTokens] = useState([]);
@@ -65,6 +67,18 @@ function SwapModal({
         });
       } else if (formValues.token0 === token1.canisterId) {
         tokenActor = token1.createActor(Principal.fromText(formValues.token0), {
+          agentOptions: {
+            identity,
+          },
+        });
+      } else if (formValues.token0 === deposit0.canisterId) {
+        tokenActor = deposit0.createActor(Principal.fromText(formValues.token0), {
+          agentOptions: {
+            identity,
+          },
+        });
+      } else if (formValues.token0 === deposit1.canisterId) {
+        tokenActor = deposit1.createActor(Principal.fromText(formValues.token0), {
           agentOptions: {
             identity,
           },
@@ -106,6 +120,18 @@ function SwapModal({
         });
       } else if (formValues.token0 === token1.canisterId) {
         tokenActor = token1.createActor(Principal.fromText(formValues.token0), {
+          agentOptions: {
+            identity,
+          },
+        });
+      } else if (formValues.token0 === deposit0.canisterId) {
+        tokenActor = deposit0.createActor(Principal.fromText(formValues.token0), {
+          agentOptions: {
+            identity,
+          },
+        });
+      } else if (formValues.token0 === deposit1.canisterId) {
+        tokenActor = deposit1.createActor(Principal.fromText(formValues.token0), {
           agentOptions: {
             identity,
           },
@@ -207,6 +233,12 @@ function SwapModal({
         const resUserBal = await swapActor.getUserBalances(principal);
         balance = resUserBal.find((b) => b[0] === tempFormvalue.token1);
       } else if (tempFormvalue.token1 === token1.canisterId) {
+        const resUserBal = await swapActor.getUserBalances(principal);
+        balance = resUserBal.find((b) => b[0] === tempFormvalue.token1);
+      } else if (tempFormvalue.token1 === deposit0.canisterId) {
+        const resUserBal = await swapActor.getUserBalances(principal);
+        balance = resUserBal.find((b) => b[0] === tempFormvalue.token1);
+      } else if (tempFormvalue.token1 === deposit1.canisterId) {
         const resUserBal = await swapActor.getUserBalances(principal);
         balance = resUserBal.find((b) => b[0] === tempFormvalue.token1);
       }

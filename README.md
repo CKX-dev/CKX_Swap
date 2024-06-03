@@ -72,29 +72,55 @@ dfx build
 
 ### Deploy swap canister and add authority for 2 token
 dfx deploy --network ic swap --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id swap)\")"
-dfx canister call swap addToken "(principal \"$(dfx canister id token0 --network ic)\", \"ICRC1\")" --network ic
-dfx canister call swap addToken "(principal \"$(dfx canister id token1 --network ic)\", \"ICRC1\")" --network ic
-dfx canister call swap createPair "(principal \"$(dfx canister id token0 --network ic)\", principal \"$(dfx canister id token1 --network ic)\")" --network ic
 
 ### Deploy aggregator canister 
 dfx deploy --network ic aggregator --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator)\", \"$(dfx canister --network ic id swap)\")"
 
+dfx deploy --network ic aggregator0 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator0)\", \"$(dfx canister --network ic id swap)\")"
+
+dfx deploy --network ic aggregator1 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator1)\", \"$(dfx canister --network ic id swap)\")"
+
 ### Deploy deposit (staking) canister and authority for 2 token
-dfx deploy --network ic deposit0 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id deposit0)\", principal \"$(dfx canister --network ic id borrow)\", \"d.ckBTC'\", \"d.ckBTC\", \"$(dfx canister --network ic id token0)\")"
+dfx deploy --network ic deposit0 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id deposit0)\", \"d.ckBTC'\", \"d.ckBTC\", \"$(dfx canister --network ic id token0)\")"
 
-dfx canister call deposit0 addToken "(principal \"$(dfx canister --network ic id token0)\", \"ICRC2\")" --network ic
-
-dfx deploy --network ic deposit1 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id deposit1)\", principal \"$(dfx canister --network ic id borrow)\",\"d.ckETH'\", \"d.ckETH\", \"$(dfx canister --network ic id token1)\")"
-
-dfx canister call deposit1 addToken "(principal \"$(dfx canister --network ic id token1)\", \"ICRC2\")" --network ic
+dfx deploy --network ic deposit1 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id deposit1)\", \"d.ckETH'\", \"d.ckETH\", \"$(dfx canister --network ic id token1)\")"
 
 ### Deploy borrow canister
 dfx deploy --network ic borrow --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator)\", principal \"$(dfx canister --network ic id deposit0)\", principal \"$(dfx canister --network ic id deposit1)\", \"$(dfx canister --network ic id swap)\", principal \"$(dfx canister --network ic id token0)\", principal \"$(dfx canister --network ic id token1)\")"
+
+dfx deploy --network ic borrow0 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator0)\", principal \"$(dfx canister --network ic id deposit0)\", \"$(dfx canister --network ic id swap)\", principal \"$(dfx canister --network ic id token0)\", principal \"$(dfx canister --network ic id deposit0)\")"
+
+dfx deploy --network ic borrow1 --argument="(principal \"$(dfx identity get-principal)\", principal \"$(dfx canister --network ic id aggregator1)\", principal \"$(dfx canister --network ic id deposit1)\", \"$(dfx canister --network ic id swap)\", principal \"$(dfx canister --network ic id token1)\", principal \"$(dfx canister --network ic id deposit1)\")"
 ```
 
 ### Step 3. Run UI
 ```bash
 npm run dev
+```
+
+### Initialize command
+```bash
+dfx canister call swap addToken "(principal \"$(dfx canister id token0 --network ic)\", \"ICRC1\")" --network ic
+dfx canister call swap addToken "(principal \"$(dfx canister id token1 --network ic)\", \"ICRC1\")" --network ic
+dfx canister call swap addToken "(principal \"$(dfx canister id deposit0 --network ic)\", \"ICRC1\")" --network ic
+dfx canister call swap addToken "(principal \"$(dfx canister id deposit1 --network ic)\", \"ICRC1\")" --network ic
+dfx canister call swap createPair "(principal \"$(dfx canister id token0 --network ic)\", principal \"$(dfx canister id token1 --network ic)\")" --network ic
+dfx canister call swap createPair "(principal \"$(dfx canister id token0 --network ic)\", principal \"$(dfx canister id deposit0 --network ic)\")" --network ic
+dfx canister call swap createPair "(principal \"$(dfx canister id token1 --network ic)\", principal \"$(dfx canister id deposit1 --network ic)\")" --network ic
+
+
+
+dfx canister call deposit0 addToken "(principal \"$(dfx canister --network ic id token0)\", \"ICRC2\")" --network ic
+
+dfx canister call deposit0 addBorrowId "(principal \"$(dfx canister --network ic id borrow)\")" --network ic
+
+dfx canister call deposit0 addBorrowId "(principal \"$(dfx canister --network ic id borrow0)\")" --network ic
+
+dfx canister call deposit1 addToken "(principal \"$(dfx canister --network ic id token1)\", \"ICRC2\")" --network ic
+
+dfx canister call deposit1 addBorrowId "(principal \"$(dfx canister --network ic id borrow)\")" --network ic
+
+dfx canister call deposit1 addBorrowId "(principal \"$(dfx canister --network ic id borrow1)\")" --network ic
 ```
 
 ### Transfer token command

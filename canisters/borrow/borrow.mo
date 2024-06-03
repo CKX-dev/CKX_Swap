@@ -183,7 +183,7 @@ shared (msg) actor class Borrow(
                                 tokenIdBorrow = r.tokenIdBorrow;
                                 borrow = r.borrow;
                                 isUsing = false;
-                                isAllowWithdraw = r.isAllowWithdraw;
+                                isAllowWithdraw = true;
                                 reserve0 = r.reserve0;
                                 reserve1 = r.reserve1;
                                 loadId = r.loadId;
@@ -804,6 +804,12 @@ shared (msg) actor class Borrow(
 
         // var totalSupply = pair.totalSupply + feeLP;
         var totalSupply = pair.totalSupply;
+
+        // Check if totalSupply is zero to avoid division by zero
+        if (totalSupply == 0) {
+            return [0, 0];
+        };
+
         var amount0 : Nat = lpAmount * pair.reserve0 / totalSupply;
         var amount1 : Nat = lpAmount * pair.reserve1 / totalSupply;
         // var amount0M = 0;
@@ -921,7 +927,7 @@ shared (msg) actor class Borrow(
         var decimals = await token_canister.icrc1_decimals();
         return decimals
     };
-    private var remove_rate : Float = 0.1;
+    private var remove_rate : Float = 0.6;
 
     ///// update check isActive data
     public func checkRemoveLP(userList : [Principal]) : async [Nat] {
@@ -931,7 +937,6 @@ shared (msg) actor class Borrow(
         var reserve0 = pair_reserve[0];
         var reserve1 = pair_reserve[1];
         var totalSupply = pair_reserve[2];
-        var rate = Float.fromInt(reserve0) / Float.fromInt(reserve1);
 
         var rtArr : [Nat] = [];
         for (principal in userList.vals()) {
@@ -941,12 +946,11 @@ shared (msg) actor class Borrow(
                     if (r.reserve0 == 0 or r.reserve1 == 1) {
                         rtArr := Array.append(rtArr, [3])
                     } else {
-
-                        var at_borrow_rate : Float = Float.fromInt(r.reserve0) / Float.fromInt(r.reserve1);
                         let now = Time.now();
                         let at_time_end = r.startTime + r.duration;
+                        var rate = await getHealthRatio(principal);
 
-                        if (Float.abs(rate - at_borrow_rate) > remove_rate or now >= at_time_end) {
+                        if (rate > remove_rate or now >= at_time_end) {
                             // remove lp
                             var aggregtor_canister = actor (Principal.toText(aggregator_id)) : actor {
                                 removeLP(
@@ -1232,22 +1236,53 @@ shared (msg) actor class Borrow(
         }
     };
 
-    public func getHealthRaito(user : Principal) : async Float {
-        var pair_reserve = await getReserves();
-        var reserve0 = pair_reserve[0];
-        var reserve1 = pair_reserve[1];
-        if (reserve0 == 0 or reserve1 == 0) return 0;
-        var rate = Float.fromInt(reserve0) / Float.fromInt(reserve1);
+    // public func getHealthRaito(user : Principal) : async Float {
+    //     var pair_reserve = await getReserves();
+    //     var reserve0 = pair_reserve[0];
+    //     var reserve1 = pair_reserve[1];
+    //     if (reserve0 == 0 or reserve1 == 0) return 0;
+    //     var rate = Float.fromInt(reserve0) / Float.fromInt(reserve1);
+    //     let maybeDepositType = depositInfoLpToken.get(user);
+    //     switch (maybeDepositType) {
+    //         case (?r) {
+
+    //             var at_borrow_rate : Float = Float.fromInt(r.reserve0) / Float.fromInt(r.reserve1);
+
+    //             return Float.abs(rate - at_borrow_rate)
+    //         };
+    //         case (null) {
+    //             return 0
+    //         }
+    //     }
+    // };
+    public func getHealthRatio(user : Principal) : async Float {
         let maybeDepositType = depositInfoLpToken.get(user);
         switch (maybeDepositType) {
             case (?r) {
+                var amountTokens = await getPairInfo(r.amount);
+                var principalTokens = await getPairInfoPrincipal(r.amount);
 
-                var at_borrow_rate : Float = Float.fromInt(r.reserve0) / Float.fromInt(r.reserve1);
+                if (amountTokens.size() < 2 or principalTokens.size() < 2) {
+                    return 0;
+                };
 
-                return Float.abs(rate - at_borrow_rate)
+                var amountToken0 = amountTokens[0];
+                var amountToken1 = amountTokens[1];
+                var principalToken0 = principalTokens[0];
+                var principalToken1 = principalTokens[1];
+
+                var healthRatio : Float = 0;
+                // Calculate the health ratio
+                if (r.tokenIdBorrow == Principal.fromText(principalToken0)) {
+                    healthRatio := Float.fromInt(r.borrow) / Float.fromInt(amountToken0);
+                } else if (r.tokenIdBorrow == Principal.fromText(principalToken1)) {
+                    healthRatio := Float.fromInt(r.borrow) / Float.fromInt(amountToken1);
+                };
+
+                return healthRatio;
             };
             case (null) {
-                return 0
+                return 0;
             }
         }
     };

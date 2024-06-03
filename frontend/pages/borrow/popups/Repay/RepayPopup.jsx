@@ -13,6 +13,7 @@ import { useAuth } from '../../../../hooks/use-auth-client';
 import * as borrow from '../../../../../src/declarations/borrow';
 import * as token0 from '../../../../../src/declarations/token0';
 import * as token1 from '../../../../../src/declarations/token1';
+import { getActor } from '../../../../utils';
 
 Modal.setAppElement('#root');
 
@@ -37,6 +38,7 @@ const customStyles = {
 };
 
 function RepayPopup({
+  pairMapping,
   isRepayModalOpen,
   closeRepayModal,
   // decimals,
@@ -44,7 +46,9 @@ function RepayPopup({
   borrowInfo,
   setUpdateUI,
 }) {
-  const { borrowActor, token0Actor, token1Actor } = useAuth();
+  const { token0Actor, token1Actor, identity } = useAuth();
+
+  const { borrowCanisterId } = pairMapping;
 
   const [loading, setLoading] = useState(false);
 
@@ -69,7 +73,7 @@ function RepayPopup({
         amount: Number(borrowInfo.borrow) * 1.5,
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(borrow.canisterId),
+        spender: Principal.fromText(borrowCanisterId),
       };
 
       try {
@@ -80,6 +84,7 @@ function RepayPopup({
         } else {
           tokenIdPay = token1Actor;
         }
+        const borrowActor = getActor(borrowCanisterId, identity);
         const tx0 = await tokenIdPay.icrc2_approve(record);
         console.log('Approve: ', tx0);
         const tx = await borrowActor.rePay();
@@ -162,6 +167,7 @@ RepayPopup.propTypes = {
   // tokenBalance: PropTypes.number,
   borrowInfo: PropTypes.object,
   setUpdateUI: PropTypes.func.isRequired,
+  pairMapping: PropTypes.object.isRequired,
 };
 
 RepayPopup.defaultProps = {

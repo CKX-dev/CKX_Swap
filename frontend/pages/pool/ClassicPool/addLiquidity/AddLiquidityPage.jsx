@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
@@ -7,25 +7,77 @@ import * as Yup from 'yup';
 import { Principal } from '@dfinity/principal';
 
 import { useAuth } from '../../../../hooks/use-auth-client';
-import * as token0 from '../../../../../src/declarations/token0';
-import * as token1 from '../../../../../src/declarations/token1';
 
 import SelectTokenModal from './SelectTokenModal/SelectTokenModal';
 
-import { calculateAmount0Desired, calculateAmount1Desired, getPriceFromPair } from '../../../../utils';
+import {
+  calculateAmount0Desired, calculateAmount1Desired, getPriceFromPair, getActor,
+} from '../../../../utils';
 
 import styles from './index.module.css';
 import AddLiquidityModal from './AddLiquidityModal/AddLiquidityModal';
 
+import ckBTC from '../../../../assets/ckBTC.png';
+import ckETH from '../../../../assets/ckETH.png';
+import dckBTC from '../../../../assets/d.ckBTC.png';
+import dckETH from '../../../../assets/d.cketh.png';
+
+import * as token0 from '../../../../../src/declarations/token0';
+import * as token1 from '../../../../../src/declarations/token1';
+import * as deposit0 from '../../../../../src/declarations/deposit0';
+import * as deposit1 from '../../../../../src/declarations/deposit1';
+
+const pairMapping = {
+  'eth-btc': {
+    token0Label: 'ckETH',
+    token1Label: 'ckBTC',
+    token0Image: ckETH,
+    token1Image: ckBTC,
+    token0Name: 'Ethereum',
+    token1Name: 'Bitcoin',
+    token0CanisterId: token1.canisterId,
+    token1CanisterId: token0.canisterId,
+  },
+  'eth-deth': {
+    token0Label: 'ckETH',
+    token1Label: 'd.ckETH',
+    token0Image: ckETH,
+    token1Image: dckETH,
+    token0Name: 'Ethereum',
+    token1Name: 'd.ckETH',
+    token0CanisterId: token1.canisterId,
+    token1CanisterId: deposit1.canisterId,
+  },
+  'btc-dbtc': {
+    token0Label: 'd.ckBTC',
+    token1Label: 'ckBTC',
+    token0Image: ckETH,
+    token1Image: dckBTC,
+    token0Name: 'd.ckBTC',
+    token1Name: 'Bitcoin',
+    token0CanisterId: token0.canisterId,
+    token1CanisterId: deposit0.canisterId,
+  },
+};
+
 function AddLiquidityPage() {
   const {
-    swapActor, principal, token0Actor, token1Actor, identity,
+    swapActor, principal, identity, getMappingFromPair,
   } = useAuth();
+  const { pair } = useParams();
   const navigation = useNavigate();
+
+  const [currentPairMapping, setCurrentPairMapping] = useState(pairMapping);
+
+  const {
+    token0Label, token1Label, token0Image, token1Image, token0Name, token1Name,
+    token0CanisterId, token1CanisterId,
+  } = currentPairMapping[pair];
+
   const validation = useFormik({
     initialValues: {
-      token0: '',
-      token1: '',
+      token0: token0CanisterId,
+      token1: token1CanisterId,
       amount0Desired: 0,
       amount1Desired: 0,
     },
@@ -48,19 +100,14 @@ function AddLiquidityPage() {
   const [price, setPrice] = useState();
   const [priceMin, setPriceMin] = useState();
   const [priceMax, setPriceMax] = useState();
-  const [selectedToken0Name, setSelectedToken0Name] = useState('');
-  const [selectedToken1Name, setSelectedToken1Name] = useState('');
   const [isTokenModalOpen, setIsTokenModalOpen] = useState(false);
   const [isAddLiquidityModalOpen, setIsAddLiquidityModalOpen] = useState(false);
-  const [selectedTokenIdentifier, setSelectedTokenIdentifier] = useState('');
   const [formValues, setFormValues] = useState(validation.values);
   const [amount1Desired, setAmount1Desired] = useState(validation.values.amount1Desired);
   const [amount0Desired, setAmount0Desired] = useState(validation.values.amount0Desired);
-  const [bothTokensSelected, setBothTokensSelected] = useState(false);
 
-  const openTokenModal = (token) => {
-    setSelectedTokenIdentifier(token);
-    setIsTokenModalOpen(true);
+  const openTokenModal = () => {
+    // setIsTokenModalOpen(true);
   };
 
   const closeTokenModal = () => {
@@ -76,7 +123,7 @@ function AddLiquidityPage() {
   };
 
   const handleGoBack = () => {
-    navigation('/swap/liquidity');
+    navigation('/pool');
   };
 
   const handleClearForm = () => {
@@ -90,46 +137,10 @@ function AddLiquidityPage() {
     setPriceMax(Infinity);
   };
 
-  const handleToken0Change = (o) => {
-    setSelectedToken0Name(o.symbol);
-    validation.setFieldValue('token0', o.id);
-
-    if (o.symbol === selectedToken1Name) {
-      setSelectedToken0Name(o.symbol);
-      setSelectedToken1Name('');
-      validation.setFieldValue('token0', o.id);
-      setBothTokensSelected(false);
-    } else {
-      setBothTokensSelected(!!selectedToken1Name);
-    }
-  };
-
-  const handleToken1Change = (o) => {
-    setSelectedToken1Name(o.symbol);
-    validation.setFieldValue('token1', o.id);
-
-    if (o.symbol === selectedToken0Name) {
-      setSelectedToken0Name(o.symbol);
-      setSelectedToken1Name('');
-      validation.setFieldValue('token1', o.id);
-      setBothTokensSelected(false);
-    } else {
-      setBothTokensSelected(!!selectedToken0Name);
-    }
-  };
-
   const handleGetUserBalances = async () => {
-    const token0ActorForSelectedToken = token0.createActor(validation.values.token0, {
-      agentOptions: {
-        identity,
-      },
-    });
+    const token0ActorForSelectedToken = getActor(validation.values.token0, identity);
 
-    const token1ActorForSelectedToken = token1.createActor(validation.values.token1, {
-      agentOptions: {
-        identity,
-      },
-    });
+    const token1ActorForSelectedToken = getActor(validation.values.token1, identity);
 
     const token0Balance = await token0ActorForSelectedToken.icrc1_balance_of({
       owner: principal,
@@ -142,6 +153,24 @@ function AddLiquidityPage() {
 
     setUserBalances([token0Balance, token1Balance]);
   };
+
+  useEffect(() => {
+    async function fetchMapping() {
+      const mapping = await getMappingFromPair(pairMapping);
+      setCurrentPairMapping(mapping);
+    }
+
+    fetchMapping();
+  }, []);
+
+  useEffect(() => {
+    if (validation.values.token0 !== token0CanisterId) {
+      validation.setFieldValue('token0', token0CanisterId);
+    }
+    if (validation.values.token1 !== token1CanisterId) {
+      validation.setFieldValue('token1', token1CanisterId);
+    }
+  }, [token0CanisterId, token1CanisterId]);
 
   useEffect(() => {
     if (
@@ -213,11 +242,10 @@ function AddLiquidityPage() {
 
   useEffect(() => {
     if (swapActor && principal && validation.values.token0
-      && validation.values.token1 && token0Actor && token1Actor) {
+      && validation.values.token1) {
       handleGetUserBalances();
     }
-  }, [swapActor, principal, validation.values.token0, validation.values.token1,
-    token0Actor, token1Actor]);
+  }, [swapActor, principal, validation.values.token0, validation.values.token1]);
 
   return (
     <div className={styles.PageContainer}>
@@ -235,11 +263,11 @@ function AddLiquidityPage() {
               <h2>Select Pair</h2>
               <div className={styles.TokenContainer}>
                 <button type="button" onClick={() => openTokenModal('0')}>
-                  {selectedToken0Name || 'Select Token 0'}
+                  {token0Label || 'Select Token 0'}
                 </button>
 
                 <button type="button" onClick={() => openTokenModal('1')}>
-                  {selectedToken1Name || 'Select Token 1'}
+                  {token1Label || 'Select Token 1'}
                 </button>
               </div>
             </div>
@@ -249,7 +277,7 @@ function AddLiquidityPage() {
 
               <div>
                 <label htmlFor="amount0Desired">
-                  {selectedToken0Name}
+                  {token0Label}
                 </label>
 
                 <input
@@ -259,7 +287,6 @@ function AddLiquidityPage() {
                   onChange={validation.handleChange}
                   onBlur={validation.handleBlur}
                   value={validation.values.amount0Desired || 0}
-                  disabled={!bothTokensSelected}
                 />
                 {validation.touched.amount0Desired && validation.errors.amount0Desired && (
                 <div>{validation.errors.amount0Desired}</div>
@@ -274,7 +301,7 @@ function AddLiquidityPage() {
 
               <div>
                 <label htmlFor="amount1Desired">
-                  {selectedToken1Name}
+                  {token1Label}
                 </label>
 
                 <input
@@ -284,7 +311,6 @@ function AddLiquidityPage() {
                   onChange={validation.handleChange}
                   onBlur={validation.handleBlur}
                   value={validation.values.amount1Desired || 0}
-                  disabled={!bothTokensSelected}
                 />
                 {validation.touched.amount1Desired && validation.errors.amount1Desired && (
                 <div>{validation.errors.amount1Desired}</div>
@@ -308,11 +334,11 @@ function AddLiquidityPage() {
                 {(price || 0).toFixed(6)}
                 {' '}
                 <span>
-                  {selectedToken1Name || '--'}
+                  {token1Label || '--'}
                   {' '}
                   per
                   {' '}
-                  {selectedToken0Name}
+                  {token0Label}
                 </span>
               </p>
               <input
@@ -321,7 +347,6 @@ function AddLiquidityPage() {
                 placeholder="Min Price"
                 value={(priceMin || 0).toFixed(6)}
                 onChange={(e) => setPriceMin(parseFloat(e.target.value))}
-                disabled={!bothTokensSelected}
               />
 
               <input
@@ -330,13 +355,12 @@ function AddLiquidityPage() {
                 placeholder="Max Price"
                 value={(priceMax || 0).toFixed(6)}
                 onChange={(e) => setPriceMax(parseFloat(e.target.value))}
-                disabled={!bothTokensSelected}
               />
 
-              <button type="button" onClick={() => handleSelectFullRange()} disabled={!bothTokensSelected}>Full Range</button>
+              <button type="button" onClick={() => handleSelectFullRange()}>Full Range</button>
             </div>
 
-            <button type="submit" disabled={!bothTokensSelected}>Submit</button>
+            <button type="submit">Submit</button>
           </div>
         </form>
       </div>
@@ -344,9 +368,12 @@ function AddLiquidityPage() {
       <SelectTokenModal
         isTokenModalOpen={isTokenModalOpen}
         closeTokenModal={closeTokenModal}
-        handleToken0Change={handleToken0Change}
-        handleToken1Change={handleToken1Change}
-        selectedTokenIdentifier={selectedTokenIdentifier}
+        token0Label={token0Label}
+        token1Label={token1Label}
+        token0Image={token0Image}
+        token1Image={token1Image}
+        token0Name={token0Name}
+        token1Name={token1Name}
       />
 
       <AddLiquidityModal

@@ -34,9 +34,25 @@
       "type": "motoko",
       "main": "canisters/aggregator/aggregator.mo"
     },
+    "aggregator0": {
+      "type": "motoko",
+      "main": "canisters/aggregator/aggregator.mo"
+    },
+    "aggregator1": {
+      "type": "motoko",
+      "main": "canisters/aggregator/aggregator.mo"
+    },
     "borrow": {
       "type": "motoko",
       "main": "canisters/borrow/borrow.mo"
+    },
+    "borrow0": {
+      "type": "motoko",
+      "main": "canisters/borrow/borrowOneToken.mo"
+    },
+    "borrow1": {
+      "type": "motoko",
+      "main": "canisters/borrow/borrowOneToken.mo"
     },
     "assets": {
       "dependencies": [

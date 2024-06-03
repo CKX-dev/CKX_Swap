@@ -1,10 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Modal from 'react-modal';
-
 import PropTypes from 'prop-types';
-
 import { useAuth } from '../../../hooks/use-auth-client';
-
 import styles from './index.module.css';
 
 Modal.setAppElement('#root');
@@ -30,10 +27,53 @@ function SelectTokenModal({
   handleToken0Change,
   handleToken1Change,
   selectedTokenIdentifier,
+  selectedToken0Name,
+  selectedToken1Name,
 }) {
   const { swapActor } = useAuth();
-
   const [tokenList, setTokenList] = useState([]);
+  const [pairs, setPairs] = useState([]);
+
+  useEffect(() => {
+    const handleGetSupportedTokenList = async () => {
+      const res = await swapActor.getSupportedTokenList();
+      setTokenList(res);
+    };
+
+    if (swapActor) {
+      handleGetSupportedTokenList();
+    }
+  }, [swapActor]);
+
+  useEffect(() => {
+    const getPairs = async () => {
+      const allPairs = await swapActor.getAllPairs();
+      setPairs(allPairs);
+    };
+
+    if (swapActor) {
+      getPairs();
+    }
+  }, [swapActor]);
+
+  const filteredTokenList = useMemo(() => {
+    if (selectedTokenIdentifier === '0' && selectedToken1Name) {
+      return tokenList.filter((token) => (
+        pairs.some((pair) => (
+          (pair.token0 === token.symbol && pair.token1 === selectedToken1Name)
+          || (pair.token1 === token.symbol && pair.token0 === selectedToken1Name)
+        ))
+      ));
+    } if (selectedTokenIdentifier === '1' && selectedToken0Name) {
+      return tokenList.filter((token) => (
+        pairs.some((pair) => (
+          (pair.token0 === token.id && pair.token1 === selectedToken0Name)
+          || (pair.token1 === token.id && pair.token0 === selectedToken0Name)
+        ))
+      ));
+    }
+    return tokenList;
+  }, [selectedTokenIdentifier, selectedToken0Name, selectedToken1Name, tokenList, pairs]);
 
   const handleTokenSelection = (o) => () => {
     if (selectedTokenIdentifier === '0') {
@@ -45,24 +85,6 @@ function SelectTokenModal({
     }
   };
 
-  useEffect(() => {
-    // const getLogo = async (symbol) => {
-    //   const logo = await swapActor.getSupportedTokenList();
-    // }
-    const handleGetSupportedTokenList = async () => {
-      const res = await swapActor.getSupportedTokenList();
-      // const newArray = res.map((item) => ({
-      //   ...item,
-      //   logo: getLogo(item.symbol),
-      // }));
-      setTokenList(res);
-    };
-
-    if (swapActor) {
-      handleGetSupportedTokenList();
-    }
-  }, [swapActor]);
-
   return (
     <Modal
       isOpen={isTokenModalOpen}
@@ -72,7 +94,7 @@ function SelectTokenModal({
       <h2>Select A Token</h2>
 
       <div className={styles.TokenListContainer}>
-        {tokenList.map((tokenInfo) => (
+        {filteredTokenList.map((tokenInfo) => (
           <button
             type="button"
             onClick={handleTokenSelection({ id: tokenInfo.id, symbol: tokenInfo.symbol })}
@@ -96,6 +118,8 @@ SelectTokenModal.propTypes = {
   handleToken0Change: PropTypes.func.isRequired,
   handleToken1Change: PropTypes.func.isRequired,
   selectedTokenIdentifier: PropTypes.string.isRequired,
+  selectedToken0Name: PropTypes.string.isRequired,
+  selectedToken1Name: PropTypes.string.isRequired,
 };
 
 export default SelectTokenModal;

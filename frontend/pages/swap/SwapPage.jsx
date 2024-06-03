@@ -9,13 +9,13 @@ import styles from './index.module.css';
 import { useAuth } from '../../hooks/use-auth-client';
 import SelectTokenModal from './SelectTokenModal/SelectTokenModal';
 import SwapModal from './SwapModal/SwapModal';
-import { getTokenFromPair } from '../../utils';
+import { getActor, getTokenFromPair } from '../../utils';
 import SettingModal from './SettingModal/SettingModal';
 
 import ckBTC from '../../assets/ckBTC.png';
 import ckETH from '../../assets/ckETH.png';
-import * as token0 from '../../../src/declarations/token0';
-import * as token1 from '../../../src/declarations/token1';
+import dckBTC from '../../assets/d.ckBTC.png';
+import dckETH from '../../assets/d.cketh.png';
 
 function SwapPage() {
   const validation = useFormik({
@@ -123,11 +123,7 @@ function SwapPage() {
 
   useEffect(() => {
     const handleGetUserBalanceToken0 = async () => {
-      const token0ActorForSelectedToken = token0.createActor(validation.values.token0, {
-        agentOptions: {
-          identity,
-        },
-      });
+      const token0ActorForSelectedToken = getActor(validation.values.token0, identity);
 
       const token0Balance = await token0ActorForSelectedToken.icrc1_balance_of({
         owner: principal,
@@ -138,11 +134,7 @@ function SwapPage() {
     };
 
     const handleGetUserBalanceToken1 = async () => {
-      const token1ActorForSelectedToken = token1.createActor(validation.values.token1, {
-        agentOptions: {
-          identity,
-        },
-      });
+      const token1ActorForSelectedToken = getActor(validation.values.token1, identity);
 
       const token1Balance = await token1ActorForSelectedToken.icrc1_balance_of({
         owner: principal,
@@ -289,6 +281,8 @@ function SwapPage() {
                     <div style={{ display: 'flex' }}>
                       {selectedToken0Name && selectedToken0Name === 'ckBTC' && <img alt="logo" src={ckBTC} />}
                       {selectedToken0Name && selectedToken0Name === 'ckETH' && <img alt="logo" src={ckETH} />}
+                      {selectedToken0Name && selectedToken0Name === 'd.ckETH' && <img alt="logo" src={dckETH} />}
+                      {selectedToken0Name && selectedToken0Name === 'd.ckBTC' && <img alt="logo" src={dckBTC} />}
                       <p>{selectedToken0Name || 'Select Token'}</p>
                     </div>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -330,6 +324,8 @@ function SwapPage() {
                     <div style={{ display: 'flex' }}>
                       {selectedToken1Name && selectedToken1Name === 'ckBTC' && <img alt="logo" src={ckBTC} />}
                       {selectedToken1Name && selectedToken1Name === 'ckETH' && <img alt="logo" src={ckETH} />}
+                      {selectedToken1Name && selectedToken1Name === 'd.ckETH' && <img alt="logo" src={dckETH} />}
+                      {selectedToken1Name && selectedToken1Name === 'd.ckBTC' && <img alt="logo" src={dckBTC} />}
                       <p>{selectedToken1Name || 'Select Token'}</p>
                     </div>
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -359,6 +355,8 @@ function SwapPage() {
           handleToken0Change={handleToken0Change}
           handleToken1Change={handleToken1Change}
           selectedTokenIdentifier={selectedTokenIdentifier}
+          selectedToken0Name={validation.values.token0}
+          selectedToken1Name={validation.values.token1}
         />
 
         <SwapModal

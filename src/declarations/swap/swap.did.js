@@ -222,6 +222,11 @@ export const idlFactory = ({ IDL }) => {
       ),
     'exportTokens' : IDL.Func([], [IDL.Vec(TokenInfoExt)], ['query']),
     'failedWithdrawRefund' : IDL.Func([IDL.Text], [WithdrawRefundReceipt], []),
+    'getAPR' : IDL.Func(
+        [IDL.Principal, IDL.Principal],
+        [IDL.Float64],
+        ['query'],
+      ),
     'getAllPairs' : IDL.Func([], [IDL.Vec(PairInfoExt)], ['query']),
     'getAllRewardPairs' : IDL.Func([], [IDL.Vec(PairInfoExt)], ['query']),
     'getAuthList' : IDL.Func(
@@ -341,19 +346,6 @@ export const idlFactory = ({ IDL }) => {
           IDL.Principal,
           IDL.Principal,
           IDL.Nat,
-          IDL.Nat,
-          IDL.Nat,
-          IDL.Principal,
-          IDL.Int,
-        ],
-        [TxReceipt],
-        [],
-      ),
-    'removeLiquidityOneToken' : IDL.Func(
-        [
-          IDL.Principal,
-          IDL.Principal,
-          IDL.Principal,
           IDL.Nat,
           IDL.Nat,
           IDL.Principal,

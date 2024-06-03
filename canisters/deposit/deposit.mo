@@ -36,7 +36,6 @@ import Archive "./ICRC1/Canisters/Archive";
 shared (msg) actor class Deposit(
     owner_ : Principal,
     deposit_id : Principal,
-    borrow_id : Principal,
     _name : Text,
     _symbol : Text,
     deposit_token_id : Text,
@@ -134,9 +133,19 @@ shared (msg) actor class Deposit(
     private stable let depositCounterV2 : Nat = 10000;
     private stable var owner : Principal = owner_;
     private var canister_token_ID : Text = deposit_token_id;
+    private var borrow_ids : [Principal] = [];
 
     public shared func getTokenId() : async Text {
         return canister_token_ID
+    };
+
+    public shared (msg) func addBorrowId(borrowId : Principal) : async Text{
+        if (msg.caller == owner_) {
+            borrow_ids := Array.append(borrow_ids, [borrowId]);
+            return "Successfully added";
+        } else {
+            return "Unauthorized access. Only owner can add borrow IDs."
+        }
     };
 
     public shared ({ caller }) func setTokenId(canisterId : Text) : async Text {
@@ -415,18 +424,10 @@ shared (msg) actor class Deposit(
     };
 
     private func compareTimestamps(t1 : Time.Time, t2 : Time.Time) : Int {
-        if (t1 > t2) {
-            return 0
-        } else if (t2 > t1) {
-            let diff = (t2 - t1) / nanosecondsPerDay;
-            if (diff > 0) {
-                return diff - 1
-            } else {
-                return 0
-            }
-        } else {
-            return 0
-        }
+        let nanosecondsPerDay : Int = 24 * 60 * 60 * 1_000_000_000;
+        let diffNanoseconds = t2 - t1;
+        let diffDays = diffNanoseconds / nanosecondsPerDay;
+        return diffDays;
     };
 
     // Get mutiplier
@@ -498,6 +499,10 @@ shared (msg) actor class Deposit(
         if (value < 10000) {
             return #err("Value too small")
         };
+        let numBorrowIds = Array.size(borrow_ids);
+        if (numBorrowIds == 0) {
+            return  #err("No borrow IDs to transfer to.");
+        };
         let tid : Text = Principal.toText(tokenId);
 
         if (tokens.hasToken(tid) == false) return #err("token not exist");
@@ -532,55 +537,63 @@ shared (msg) actor class Deposit(
                 }
             }
         };
-        if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
-        ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
 
-        var firstNum = getFirstMultiplier(value, duration);
-        var maybeId = depositID.get(msg.caller);
-        var id = 0;
-        switch (maybeId) {
-            case (?r) {
-                id := r;
-                depositID.put(msg.caller, id +1)
+        if (duration == 0) {
+            let result : ICRC1.TransferResult = await privateMint(msg.caller, value)
+        } else {
+            if (value < tokens.getFee(tid)) return #err("value less than token transfer fee");
+            ignore tokens.mint(tid, msg.caller, effectiveDepositAmount(tid, value));
+
+            var firstNum = getFirstMultiplier(value, duration);
+            var maybeId = depositID.get(msg.caller);
+            var id = 0;
+            switch (maybeId) {
+                case (?r) {
+                    id := r;
+                    depositID.put(msg.caller, id +1)
+                };
+                case (_) {
+                    id := 0;
+                    depositID.put(msg.caller, id +1)
+                }
             };
-            case (_) {
-                id := 0;
-                depositID.put(msg.caller, id +1)
-            }
-        };
-        var newDepInform : DepositType = {
-            amount = value;
-            firstMultiplier = firstNum;
-            duration = duration;
-            startTime = Time.now();
-            id = id;
-            lastUpdateTime = 0;
-            isActive = true;
-            lastClaimedTime = 0;
-        };
-
-        updateArrayForPrincipal(msg.caller, value, newDepInform);
-
-        var token_canister = actor (tid) : actor {
-            icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
-        };
-
-        var defaultSubaccount : Blob = Utils.defaultSubAccount();
-        var transferArg : ICRC1.TransferArgs = {
-            from_subaccount = null;
-            created_at_time = null;
-            fee = null;
-            memo = null;
-            to = {
-                owner = borrow_id;
-                subaccount = ?defaultSubaccount
+            var newDepInform : DepositType = {
+                amount = value;
+                firstMultiplier = firstNum;
+                duration = duration;
+                startTime = Time.now();
+                id = id;
+                lastUpdateTime = 0;
+                isActive = true;
+                lastClaimedTime = 0;
             };
-            amount = value * 60 / 100
-        };
-        var txResult = await token_canister.icrc1_transfer(transferArg);
 
-        Debug.print("transfer lend to borrow");
-        Debug.print(debug_show(txResult));
+            updateArrayForPrincipal(msg.caller, value, newDepInform);
+
+            var token_canister = actor (tid) : actor {
+                icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
+            };
+
+            var defaultSubaccount : Blob = Utils.defaultSubAccount();
+            let amountPerBorrow = value * 60 / 100 / numBorrowIds;
+            for (borrow_id in borrow_ids.vals()) {
+              var transferArg : ICRC1.TransferArgs = {
+                  from_subaccount = null;
+                  created_at_time = null;
+                  fee = null;
+                  memo = null;
+                  to = {
+                      owner = borrow_id;
+                      subaccount = ?defaultSubaccount
+                  };
+                  amount = amountPerBorrow;
+              };
+              var txResult = await token_canister.icrc1_transfer(transferArg);
+
+              Debug.print("transfer lend to borrow" #Principal.toText(borrow_id));
+              Debug.print(debug_show(txResult));
+            };
+        };
 
         // var mintValue : Nat = Nat64.toNat(Int64.toNat64(Float.toInt64(Float.floor(firstNum))));
         // let result0 : ICRC1.TransferResult = await privateMint(msg.caller, mintValue);
@@ -624,6 +637,103 @@ shared (msg) actor class Deposit(
 
     public func getDepositId(userId : Principal) : async ?[DepositType] {
         return depositInfoCkETH.get(userId)
+    };
+
+    // Calculate the Total Interest
+    public func getTotalInterest() : async Nat {
+        var totalInterest : Nat = 0;
+        for ((principal, deposits) in depositInfoCkETH.entries()) {
+            for (deposit in deposits.vals()) {
+                if (deposit.isActive) {
+                    let interest = await getInterestInfo(principal);
+                    totalInterest += interest;
+                }
+            }
+        };
+        return totalInterest;
+    };
+
+    // Calculate the Share of Interest
+    public func getShareOfInterest() : async ?Float {
+        let totalSupply = await getCirculatingSupply();
+        if (totalSupply > 0) {
+            let totalInterest = await getTotalInterest();
+            let shareOfInterest = (Float.fromInt(totalInterest) / Float.fromInt(totalSupply)) * 100.0;
+            return ?shareOfInterest;
+        } else {
+            return null;
+        }
+    };
+
+    // Calculate the Circulating Supply
+    public func getCirculatingSupply() : async Nat {
+        var circulatingSupply : Nat = 0;
+        for (deposits in depositInfoCkETH.vals()) {
+            for (deposit in deposits.vals()) {
+                if (deposit.isActive) {
+                    circulatingSupply += deposit.amount;
+                }
+            }
+        };
+        return circulatingSupply;
+    };
+
+    public func getTotalInterestPaidOut(days: Nat) : async Nat {
+        var totalAmount : Nat = 0;
+        let currentTime = Time.now();
+
+        let timeThreshold = currentTime - days * 24 * 60 * 60 * 1_000_000_000;
+
+        for (deposits in rewardDepositInfo.vals()) {
+          if (deposits.depositTime >= timeThreshold) {
+            totalAmount += deposits.amount;
+          }
+        };
+        return totalAmount;
+    };
+
+    // Calculate the Average Lock
+    public func getAverageLock(userId : Principal) : async ?Nat {
+        var totalLockDuration : Nat = 0;
+        var lockedDepositsCount : Nat = 0;
+        let maybeArray = depositInfoCkETH.get(userId);
+
+        switch (maybeArray) {
+          case (?r) {
+              for (deposit in r.vals()) {
+                  if (deposit.isActive and deposit.startTime + deposit.duration * 24 * 60 * 60 * 1_000_000_000 > Time.now()) {
+                      totalLockDuration += deposit.duration;
+                      lockedDepositsCount += 1;
+                  }
+              }
+          };
+          case (_) {}
+        };
+
+        if (lockedDepositsCount > 0) {
+            return ?(totalLockDuration / lockedDepositsCount);
+        } else {
+            return null;
+        }
+    };
+
+    // Calculate the Global Average Lock Time
+    public func getGlobalAverageLockTime() : async ?Nat {
+        var totalLockDuration : Nat = 0;
+        var lockedDepositsCount : Nat = 0;
+        for (deposits in depositInfoCkETH.vals()) {
+            for (deposit in deposits.vals()) {
+                if (deposit.isActive and deposit.startTime + deposit.duration * 24 * 60 * 60 * 1_000_000_000 > Time.now()) {
+                    totalLockDuration += deposit.duration;
+                    lockedDepositsCount += 1;
+                }
+            }
+        };
+        if (lockedDepositsCount > 0) {
+            return ?(totalLockDuration / lockedDepositsCount);
+        } else {
+            return null;
+        }
     };
 
     // private var nanosecondsPerDay : Time.Time = 24 * 60 * 60 * 1_000_000_000;
@@ -693,6 +803,32 @@ shared (msg) actor class Deposit(
 
         txcounter += 1;
         return #ok(txcounter - 1)
+    };
+
+    public func calculateAPY() : async Float {
+        var totalReward: Nat = 0;
+        var totalShare: Nat = 0;
+        let currentTime = Time.now();
+        let oneDayAgo = currentTime - (24 * 60 * 60 * 1_000_000_000);
+
+        for (entry in rewardDepositInfo.vals()) {
+            if (entry.depositTime >= oneDayAgo) {
+                totalReward += entry.amount;
+                totalShare += entry.totalShare;
+            }
+        };
+
+        if (totalShare == 0) {
+            return 0;
+        };
+
+        let totalRewardFloat = Float.fromInt(totalReward);
+        let totalShareFloat = Float.fromInt(totalShare);
+
+        let dailyInterestRate = totalRewardFloat / totalShareFloat;
+        let apy = (1.0 + dailyInterestRate / 365.0) ** 365.0 - 1.0;
+
+        return apy;
     };
 
     /////////////////////////////////// FIX THIS ///////////////////////////////////
@@ -804,7 +940,7 @@ shared (msg) actor class Deposit(
         return totalInterest
     };
 
-    public shared (msg) func privateWithdraw(index : Nat, caller : Principal) : async ICRC1.TransferResult {
+    public shared func privateWithdraw(index : Nat, caller : Principal) : async ICRC1.TransferResult {
         var maybeArray = depositInfoCkETH.get(caller);
 
         let outerMap0 = isProcessing.get(caller);
@@ -864,48 +1000,35 @@ shared (msg) actor class Deposit(
                         icrc1_transfer(args : ICRC1.TransferArgs) : async ICRC1.TransferResult;
                         icrc1_balance_of(args : ICRC1.Account) : async ICRC1.Balance
                     };
-                    var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
-                        sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
-                    };
                     var defaultSubaccount : Blob = Utils.defaultSubAccount();
                     let bal : ICRC1.Balance = await canister2.icrc1_balance_of({
                       owner = Principal.fromActor(this);
                       subaccount = ?defaultSubaccount
                     });
-                    if (bal < withdrawValue) {
-                        var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), withdrawValue - bal);
-                        switch (sendTx) {
-                          case (#Ok(txIndex)) {};
-                          case (#Err(transferError)) {
-                            switch (transferError) {
-                                case (#BadFee { expected_fee }) {
-                                    return #Err(#BadFee{ expected_fee});
-                                };
-                                case (#BadBurn { min_burn_amount }) {
-                                    return #Err(#BadBurn{ min_burn_amount});
-                                };
-                                case (#InsufficientFunds { balance }) {
-                                    return #Err(#InsufficientFunds{ balance});
-                                };
-                                case (#TooOld) {
-                                    return #Err(#TooOld);
-                                };
-                                case (#CreatedInFuture { ledger_time }) {
-                                    return #Err(#CreatedInFuture{ ledger_time});
-                                };
-                                case (#Duplicate { duplicate_of }) {
-                                    return #Err(#Duplicate{ duplicate_of});
-                                };
-                                case (#TemporarilyUnavailable) {
-                                    return #Err(#TemporarilyUnavailable);
-                                };
-                                case (#GenericError { error_code; message }) {
-                                    return #Err(#GenericError{ error_code; message});
-                                }
-                            };
+
+                    for (borrow_id in borrow_ids.vals()) {
+                        var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
+                            sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
                         };
-                        }
+
+                        if (bal < withdrawValue) {
+                            var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), (withdrawValue - bal) / Array.size(borrow_ids));
+                            switch (sendTx) {
+                              case (#Ok(txIndex)) {};
+                              case (#Err(_)) {
+                                let outerMap2 = isProcessing.get(caller);
+                                    switch (outerMap2) {
+                                        case (null) {};
+                                        case (?innerMap) {
+                                            innerMap.put(index, false)
+                                        }
+                                    };
+                                    return #Err(#GenericError { error_code = 998; message = "Failed to transfer" });
+                              };
+                            }
+                        };
                     };
+
                     let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
                         from_subaccount = null;
                         to = { owner = caller; subaccount = null };
@@ -915,10 +1038,18 @@ shared (msg) actor class Deposit(
                         created_at_time = null
                     };
                     switch (tx) {
-                        case (#Err e) {
-                            return #Err(#GenericError { error_code = 998; message = "Failed to transfer" })
+                        case (#Err(_)) {
+                            // Reset the isProcessing flag for this deposit index
+                            let outerMap2 = isProcessing.get(caller);
+                            switch (outerMap2) {
+                                case (null) {};
+                                case (?innerMap) {
+                                    innerMap.put(index, false)
+                                }
+                            };
+                            return #Err(#GenericError { error_code = 998; message = "Failed to transfer" });
                         };
-                        case (#Ok _) {}
+                        case (#Ok(_)) {}
                     };
                 };
 
@@ -1039,6 +1170,9 @@ shared (msg) actor class Deposit(
 
                     for (deposit in rewardDepositInfo.vals()) {
                         if (deposit.depositTime > depEle.lastClaimedTime and deposit.depositTime > depEle.startTime) {
+                            var t1 = depEle.startTime + depEle.lastUpdateTime * 24 * 60 * 60 * 1_000_000_000;
+                            var t2 = Time.now();
+                            var updateDay = compareTimestamps(t1, t2);
                             var firstMultiplier = getFirstMultiplier(depEle.amount, depEle.duration);
                             var currentMul : Float = await getCurrentMultiplier(depEle);
                             // var dck = Nat64.toNat(Int64.toNat64(Float.toInt64(currentMul)));
@@ -1052,7 +1186,7 @@ shared (msg) actor class Deposit(
                                 duration = depEle.duration;
                                 firstMultiplier = firstMultiplier;
                                 isActive = true;
-                                lastUpdateTime = depEle.lastUpdateTime; //updateDay
+                                lastUpdateTime = updateDay; //updateDay
                                 startTime = depEle.startTime;
                                 lastClaimedTime = if (deposit.depositTime > depEle.lastClaimedTime) {
                                     deposit.depositTime
@@ -1198,7 +1332,6 @@ shared (msg) actor class Deposit(
             };
             case (#Ok _) {}
         };
-
         var transferValue = value * 999 / 1000;
 
         var canister2 = actor (canister_token_ID) : actor {
@@ -1216,47 +1349,52 @@ shared (msg) actor class Deposit(
         //     created_at_time = null;
         //     expected_allowance = null
         // };
-        var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
-            sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
-        };
         let bal : ICRC1.Balance = await canister2.icrc1_balance_of({
           owner = Principal.fromActor(this);
           subaccount = ?defaultSubaccount
         });
-        if (bal < transferValue) {
-            var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), transferValue - bal);
-            switch (sendTx) {
-              case (#Ok(txIndex)) {};
-              case (#Err(transferError)) {
-                switch (transferError) {
-                    case (#BadFee { expected_fee }) {
-                        return #Err(#BadFee{ expected_fee});
-                    };
-                    case (#BadBurn { min_burn_amount }) {
-                        return #Err(#BadBurn{ min_burn_amount});
-                    };
-                    case (#InsufficientFunds { balance }) {
-                        return #Err(#InsufficientFunds{ balance});
-                    };
-                    case (#TooOld) {
-                        return #Err(#TooOld);
-                    };
-                    case (#CreatedInFuture { ledger_time }) {
-                        return #Err(#CreatedInFuture{ ledger_time});
-                    };
-                    case (#Duplicate { duplicate_of }) {
-                        return #Err(#Duplicate{ duplicate_of});
-                    };
-                    case (#TemporarilyUnavailable) {
-                        return #Err(#TemporarilyUnavailable);
-                    };
-                    case (#GenericError { error_code; message }) {
-                        return #Err(#GenericError{ error_code; message});
-                    }
-                };
+
+        for (borrow_id in borrow_ids.vals()) {
+            var borrowCanister = actor (Principal.toText(borrow_id)) : actor {
+                sendTokenToLendingCanister(tokenId: Principal, amount: Nat) : async ICRC1.TransferResult;
             };
-            }
+
+            if (bal < transferValue) {
+                var sendTx = await borrowCanister.sendTokenToLendingCanister(Principal.fromText(canister_token_ID), (transferValue - bal)/ Array.size(borrow_ids));
+                switch (sendTx) {
+                  case (#Ok(txIndex)) {};
+                  case (#Err(transferError)) {
+                    switch (transferError) {
+                        case (#BadFee { expected_fee }) {
+                            return #Err(#BadFee{ expected_fee});
+                        };
+                        case (#BadBurn { min_burn_amount }) {
+                            return #Err(#BadBurn{ min_burn_amount});
+                        };
+                        case (#InsufficientFunds { balance }) {
+                            return #Err(#InsufficientFunds{ balance});
+                        };
+                        case (#TooOld) {
+                            return #Err(#TooOld);
+                        };
+                        case (#CreatedInFuture { ledger_time }) {
+                            return #Err(#CreatedInFuture{ ledger_time});
+                        };
+                        case (#Duplicate { duplicate_of }) {
+                            return #Err(#Duplicate{ duplicate_of});
+                        };
+                        case (#TemporarilyUnavailable) {
+                            return #Err(#TemporarilyUnavailable);
+                        };
+                        case (#GenericError { error_code; message }) {
+                            return #Err(#GenericError{ error_code; message});
+                        }
+                    };
+                };
+                }
+            };
         };
+
         let tx : ICRC1.TransferResult = await canister2.icrc1_transfer {
             from_subaccount = null;
             to = { owner = msg.caller; subaccount = null };

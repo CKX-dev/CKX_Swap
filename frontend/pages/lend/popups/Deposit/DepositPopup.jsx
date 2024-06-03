@@ -69,7 +69,7 @@ function DepositPopup({
   };
 
   const submitDeposit = async () => {
-    if (!amountInput || !selectedOption) {
+    if (!amountInput) {
       alert('Missing input');
     } else {
       const record = {
@@ -248,6 +248,7 @@ function DepositPopup({
           {dropDownDuration
             && (
               <div className={styles.DropDownElements}>
+                <button onClick={() => handleSelect(0)} type="button"><p>0 day</p></button>
                 <button onClick={() => handleSelect(1)} type="button"><p>1 day</p></button>
                 <button onClick={() => handleSelect(3)} type="button"><p>3 days</p></button>
                 <button onClick={() => handleSelect(7)} type="button"><p>7 days</p></button>

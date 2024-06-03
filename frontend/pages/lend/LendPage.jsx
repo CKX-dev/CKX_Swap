@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Principal } from '@dfinity/principal';
+// import { Principal } from '@dfinity/principal';
 import DepositPopup from './popups/Deposit/DepositPopup';
 import WithdrawPopup from './popups/Withdraw/WithdrawPopup';
 import ClaimPopup from './popups/Claim/ClaimPopup';
@@ -12,10 +12,10 @@ import ckBTC from '../../assets/ckBTC.png';
 import ckETH from '../../assets/ckETH.png';
 import dckBTC from '../../assets/d.ckBTC.png';
 import dckETH from '../../assets/d.cketh.png';
-import * as deposit0 from '../../../src/declarations/deposit0';
-import * as deposit1 from '../../../src/declarations/deposit1';
-import * as token0 from '../../../src/declarations/token0';
-import * as token1 from '../../../src/declarations/token1';
+// import * as deposit0 from '../../../src/declarations/deposit0';
+// import * as deposit1 from '../../../src/declarations/deposit1';
+// import * as token0 from '../../../src/declarations/token0';
+// import * as token1 from '../../../src/declarations/token1';
 
 function LendPage() {
   const {
@@ -27,6 +27,7 @@ function LendPage() {
   const [isClaimOpen, setIsClaimOpen] = useState(false);
   const [switchPage, setSwitchPage] = useState('ckETH');
   const [lockedckETH, setLockedckETH] = useState(0);
+  const [unlockedckETH, setUnlockedckETH] = useState(0);
   const [depositActor, setDepositActor] = useState(deposit1Actor);
   const [tokenActor, setToken0Actor] = useState(token1Actor);
 
@@ -57,6 +58,7 @@ function LendPage() {
   const [depositedValue, setDepositedValue] = useState();
   const [tokenBalance, setTokenBalance] = useState();
   const [interest, setInterest] = useState();
+  const [apy, setAPY] = useState(0);
   const [decimals, setDecimals] = useState();
 
   const [updateUI, setUpdateUI] = useState(false);
@@ -64,11 +66,20 @@ function LendPage() {
   useEffect(() => {
     setDepositActor(switchPage === 'ckETH' ? deposit1Actor : deposit0Actor);
     setToken0Actor(switchPage === 'ckETH' ? token1Actor : token0Actor);
+
+    setLockedckETH(0);
+    setUnlockedckETH(0);
+    setDepositedValue(0);
+    setInterest(0);
+    setWrapBalance(0);
+    setTokenBalance(0);
+    setDecimals(undefined);
+    setUpdateUI((prevState) => !prevState);
   }, [switchPage, deposit0Actor, deposit1Actor, token0Actor, token1Actor]);
 
   useEffect(() => {
     const getBalanceUI = async () => {
-      if (principal) {
+      if (principal && depositActor) {
         try {
           const tx = await depositActor.getTokenBalance(principal);
           setTokenBalance(Number(tx));
@@ -76,6 +87,8 @@ function LendPage() {
           setWrapBalance(Number(tx2));
           const tx3 = await depositActor.getInterestInfo(principal);
           setInterest(Number(tx3));
+          const tx4 = await depositActor.calculateAPY();
+          setAPY(tx4);
         } catch (error) {
           console.log(error);
         }
@@ -86,7 +99,7 @@ function LendPage() {
 
   useEffect(() => {
     const getDeposit = async () => {
-      if (principal && decimals) {
+      if (principal && decimals && depositActor) {
         const tx = await depositActor.getDepositId(principal);
 
         const fetchCurrentWrap = async (depositType) => {
@@ -97,6 +110,7 @@ function LendPage() {
 
         if (originalList) {
           let totalWrap = 0;
+          let totalUnlocked = 0;
           let totalDeposited = 0;
           const idPromises = originalList.forEach(async (item) => {
             if (item.isActive && (Number((Date.now()) * 10 ** 6 - Number(item.startTime))
@@ -107,6 +121,14 @@ function LendPage() {
               setLockedckETH(totalWrap.toFixed(6));
             }
 
+            if (item.isActive && (Number((Date.now()) * 10 ** 6 - Number(item.startTime))
+              >= Number(item.duration) * 24 * 60 * 60 * 1000000000)) {
+              const value = await fetchCurrentWrap(item);
+              const wrapValue = Number(value) / 10 ** decimals;
+              totalUnlocked += Number(wrapValue);
+              setUnlockedckETH(totalUnlocked.toFixed(6));
+            }
+
             if (item.isActive) {
               const value = item.amount;
               const depositedVal = Number(value) / 10 ** decimals;
@@ -114,7 +136,10 @@ function LendPage() {
               setDepositedValue(totalDeposited);
             }
           });
-          await Promise.all(idPromises);
+
+          if (idPromises) {
+            await Promise.all(idPromises);
+          }
         }
       }
     };
@@ -239,7 +264,7 @@ function LendPage() {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ lineHeight: '24px', fontSize: '14px' }}>AVAILABLE</div>
-                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{(wrapBalance / 10 ** decimals) || 0}</div>
+                <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{parseFloat(wrapBalance / 10 ** decimals).toFixed(2) || 0}</div>
               </div>
             </div>
             <div className={styles.WithdrawBottom}>
@@ -268,14 +293,19 @@ function LendPage() {
                 </div>
               </div>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ lineHeight: '24px', fontSize: '14px' }}>$NaN</div>
                 {interest ? <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>{(interest / 10 ** decimals).toFixed(6)}</div>
                   : <div style={{ fontSize: '24px', color: 'rgba(204, 204, 204, 1)', marginTop: '6px' }}>0</div>}
               </div>
             </div>
             <div className={styles.ClaimBottom}>
               <div className={styles.TextTitle}>INTEREST APY (24HRS)</div>
-              <div className={styles.TextTContent}>NaN%</div>
+              <div className={styles.TextTContent}>
+                <div className={styles.TextTContent}>
+                  {Number(lockedckETH) === 0
+                    ? '0%'
+                    : `${(apy).toFixed(2)}%`}
+                </div>
+              </div>
             </div>
             <button type="button" className={styles.ButtonContainer} onClick={openClaim}>
               Claim
@@ -283,7 +313,13 @@ function LendPage() {
             </button>
           </div>
         </div>
-        <BottomLend switchPage={switchPage} />
+        <BottomLend
+          switchPage={switchPage}
+          depositActor={depositActor}
+          updateUI={updateUI}
+          lockedckETH={lockedckETH}
+          unlockedckETH={unlockedckETH}
+        />
       </div>
     </div>
   );

@@ -161,23 +161,31 @@ type DepositType =
  };
 type Deposit = 
  service {
+   addBorrowId: (principal) -> (text);
    addToken: (principal, text) -> (TxReceipt);
    approveToken: (nat) -> (ApproveResult);
    balanceOf: (text, principal) -> (nat) query;
    burn: (BurnArgs) -> (TransferResult);
+   calculateAPY: () -> (float64);
    deposit: (principal, nat, nat) -> (TxReceipt);
    depositReward: (principal, nat) -> (TxReceipt);
    deposit_cycles: () -> ();
+   getAverageLock: (principal) -> (opt nat);
+   getCirculatingSupply: () -> (nat);
    getCurrentMultiplier: (DepositType) -> (float64);
    getDepositId: (principal) -> (opt vec DepositType);
+   getGlobalAverageLockTime: () -> (opt nat);
    getICRC1SubAccountBalance: (principal, text) -> (ICRC1SubAccountBalance);
    getInterestInfo: (principal) -> (nat);
    getInterestUI: (principal) -> (float64);
    getMultiplier: (Time, Time, float64, float64, nat) -> (float64);
    getPrincipal: () -> (principal);
+   getShareOfInterest: () -> (opt float64);
    getTokenBalance: (principal) -> (Balance__1);
    getTokenDecimals: () -> (nat8);
    getTokenId: () -> (text);
+   getTotalInterest: () -> (nat);
+   getTotalInterestPaidOut: (nat) -> (nat);
    getWrapBalance: (principal) -> (Balance__1);
    get_transaction: (TxIndex__1) -> (opt Transaction__1);
    get_transactions: (GetTransactionsRequest) ->
@@ -279,4 +287,4 @@ type Account =
    owner: principal;
    subaccount: opt Subaccount;
  };
-service : (principal, principal, principal, text, text, text) -> Deposit
+service : (principal, principal, text, text, text) -> Deposit

@@ -67,7 +67,7 @@ function App() {
         <Route path={LOCATION.POOL} element={<Layout />}>
           <Route index element={<PoolPage />} />
 
-          <Route exact path="classic" element={<Classic />} />
+          <Route path="classic/:pair" element={<Classic />} />
           <Route exact path="myPosition" element={<Classic />} />
           <Route exact path="deposit" element={<Classic />} />
           <Route exact path="withdraw" element={<Classic />} />

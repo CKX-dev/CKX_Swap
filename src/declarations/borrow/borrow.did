@@ -60,7 +60,7 @@ type Borrow =
                                    });
    getDepositId: () -> (opt DepositType);
    getDepositIdPerUser: (principal) -> (opt DepositType);
-   getHealthRaito: (principal) -> (float64);
+   getHealthRatio: (principal) -> (float64);
    getLoanDetail: (nat) -> (opt LoanDetail);
    getPairInfo: (nat) -> (vec nat);
    getPairInfoPrincipal: (nat) -> (vec text);

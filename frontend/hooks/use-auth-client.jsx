@@ -15,6 +15,7 @@ import * as deposit0 from '../../src/declarations/deposit0';
 import * as deposit1 from '../../src/declarations/deposit1';
 import * as aggregator from '../../src/declarations/aggregator';
 import * as borrow from '../../src/declarations/borrow';
+import { getMapping } from '../utils';
 
 const AuthContext = createContext();
 
@@ -144,6 +145,11 @@ export const useAuthClient = (options = defaultOptions) => {
     setBorrowActor(borrowActorRes);
   }
 
+  const getMappingFromPair = async (pairMapping) => {
+    const pair = await getMapping(identity, pairMapping);
+    return pair;
+  };
+
   async function logout() {
     await authClient?.logout();
     await updateClient(authClient);
@@ -163,6 +169,7 @@ export const useAuthClient = (options = defaultOptions) => {
     deposit1Actor,
     aggregatorActor,
     borrowActor,
+    getMappingFromPair,
   };
 };
 

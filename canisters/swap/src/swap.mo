@@ -29,6 +29,7 @@ import Bool "mo:base/Bool";
 import Error "mo:base/Error";
 import Account "./Account";
 import ICRC1 "./ICRC1";
+import Float "mo:base/Float";
 
 shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
     type Errors = {
@@ -296,6 +297,12 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
         #Err : Text
     };
 
+    type SwapTransaction = {
+        token: Text;
+        amount: Nat;
+        timestamp: Int;
+    };
+
     public type TokenInfo = Tokens.TokenInfo;
     public type TokenInfoExt = Tokens.TokenInfoExt;
     public type TokenInfoWithType = Tokens.TokenInfoWithType;
@@ -322,6 +329,8 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
 
     // ic management canister
     let ic : IC.ICActor = actor ("aaaaa-aa");
+
+    var swapTransactions = HashMap.HashMap<Nat, SwapTransaction>(0, Nat.equal, Hash.hash);
 
     private var depositTransactions = HashMap.HashMap<Principal, DepositSubAccounts>(1, Principal.equal, Principal.hash);
     private var userFundRecoveries = HashMap.HashMap<Principal, RecoveryDetails>(1, Principal.equal, Principal.hash);
@@ -2332,6 +2341,39 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
         return ops.toArray()
     };
 
+    public query func getAPR(token0 : Principal, token1 : Principal): async Float {
+        let pair = switch (_getPair(Principal.toText(token0), Principal.toText(token1))) {
+            case (?p) { p };
+            case (_) {
+                return 0.0;
+            };
+        };
+
+        let currentTimestamp = Time.now();
+        let ethLiquidity = pair.reserve0;
+        let btcLiquidity = pair.reserve1;
+
+        var totalETHSwapped24h = 0;
+        var totalBTCSwapped24h = 0;
+
+        for ((_, swapTx) in swapTransactions.entries()) {
+            if (currentTimestamp - swapTx.timestamp <= 24 * 60 * 60 * 1_000_000_000) {
+                if (swapTx.token == pair.token0) {
+                    totalETHSwapped24h += swapTx.amount;
+                } else if (swapTx.token == pair.token1) {
+                    totalBTCSwapped24h += swapTx.amount;
+                };
+            };
+        };
+
+        let aprETH : Float = 0.002 * Float.fromInt(totalETHSwapped24h) / Float.fromInt(ethLiquidity) * 365.0;
+        let aprBTC : Float = 0.002 * Float.fromInt(totalBTCSwapped24h) / Float.fromInt(btcLiquidity) * 365.0;
+
+        let averageAPR = (aprETH + aprBTC) / 2.0;
+
+        return averageAPR;
+    };
+
     public shared (msg) func swapExactTokensForTokens(
         amountIn : Nat,
         amountOutMin : Nat,
@@ -2357,6 +2399,14 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
             txcounter += 1
         };
         swapLastTransaction.put(msg.caller, #SwapOutAmount(amounts[1]));
+
+        let currentTimestamp = Time.now();
+        let swapTx: SwapTransaction = {
+            token = path[0];
+            amount = amounts[0];
+            timestamp = currentTimestamp;
+        };
+        swapTransactions.put(txcounter, swapTx);
         return #ok(txcounter - 1)
     };
 
@@ -3249,6 +3299,7 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
             #setMaxTokenValidate : () -> Nat;
             #setMaxTokens : () -> Nat;
             #setOwner : () -> Principal;
+            #getAPR: () -> (Principal, Principal);
             #swapExactTokensForTokens : () -> (Nat, Nat, [Text], Principal, Int);
             #symbol : () -> Text;
             #totalSupply : () -> Text;
@@ -3535,6 +3586,7 @@ shared (msg) actor class Swap(owner_ : Principal, swap_id : Principal) = this {
             case (#getSwapInfo _) { true };
             case (#getHolders _) { true };
             case (#getPair _) { true };
+            case (#getAPR _) { true };
             case (#getUserReward _) { true };
             case (#balanceOf _) { true };
             case (#allowance _) { true };

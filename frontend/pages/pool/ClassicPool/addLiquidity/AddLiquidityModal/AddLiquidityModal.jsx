@@ -6,11 +6,15 @@ import Modal from 'react-modal';
 import PropTypes from 'prop-types';
 
 import { Principal } from '@dfinity/principal';
+import { useParams } from 'react-router-dom';
 import { useAuth } from '../../../../../hooks/use-auth-client';
 
 import * as aggregator from '../../../../../../src/declarations/aggregator';
+import * as aggregator0 from '../../../../../../src/declarations/aggregator0';
+import * as aggregator1 from '../../../../../../src/declarations/aggregator1';
 
 import styles from './index.module.css';
+import { getActor } from '../../../../../utils';
 
 Modal.setAppElement('#root');
 
@@ -28,6 +32,18 @@ const customStyles = {
   },
 };
 
+const pairMapping = {
+  'eth-btc': {
+    aggregatorCanisterId: aggregator.canisterId,
+  },
+  'eth-deth': {
+    aggregatorCanisterId: aggregator1.canisterId,
+  },
+  'btc-dbtc': {
+    aggregatorCanisterId: aggregator0.canisterId,
+  },
+};
+
 function AddLiquidityModal({
   isAddLiquidityModalOpen,
   closeAddLiquidityModal,
@@ -41,13 +57,17 @@ function AddLiquidityModal({
   handleGetUserBalances,
 }) {
   const {
-    swapActor, token0Actor, token1Actor,
-    aggregatorActor, principal,
+    swapActor, principal, identity,
   } = useAuth();
+  const { pair } = useParams();
 
   const [tokens, setTokens] = useState([]);
-  const [pair, setPair] = useState();
+  const [p, setP] = useState();
   const [loading, setLoading] = useState(false);
+
+  const {
+    aggregatorCanisterId,
+  } = pairMapping[pair];
 
   const handleToSymbol = async (t0, t1) => {
     const tk0 = await swapActor.symbol(t0);
@@ -257,6 +277,9 @@ function AddLiquidityModal({
     try {
       setLoading(true);
       let res;
+      const token0Actor = getActor(formValues.token0, identity);
+      const token1Actor = getActor(formValues.token1, identity);
+      const aggregatorActor = getActor(aggregatorCanisterId, identity);
       const t0b = await token0Actor.icrc1_balance_of({
         owner: principal,
         subaccount: [],
@@ -273,7 +296,7 @@ function AddLiquidityModal({
         amount: t0b,
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(aggregator.canisterId),
+        spender: Principal.fromText(aggregatorCanisterId),
       };
       const record1 = {
         fee: [],
@@ -283,7 +306,7 @@ function AddLiquidityModal({
         amount: t1b,
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(aggregator.canisterId),
+        spender: Principal.fromText(aggregatorCanisterId),
       };
 
       await token0Actor.icrc2_approve(record);
@@ -291,7 +314,7 @@ function AddLiquidityModal({
 
       console.log(formValues);
 
-      if (formValues.token0 === pair[0].token0) {
+      if (formValues.token0 === p[0].token0) {
         const timestamp = Math.floor(new Date().getTime() * 10000000000);
 
         res = await aggregatorActor.addLP(
@@ -357,7 +380,7 @@ function AddLiquidityModal({
         Principal.fromText(formValues.token1),
       );
 
-      setPair(res);
+      setP(res);
     };
 
     if (swapActor && formValues.token0 && formValues.token1) {

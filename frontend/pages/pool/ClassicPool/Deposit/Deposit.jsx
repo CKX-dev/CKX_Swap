@@ -3,22 +3,61 @@
 import React, { useEffect, useState } from 'react';
 import { Principal } from '@dfinity/principal';
 import { toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
 import {
   DepositIcon,
 } from '../Utils';
 import styles from './index.module.css';
 import * as token0 from '../../../../../src/declarations/token0';
 import * as token1 from '../../../../../src/declarations/token1';
+import * as deposit0 from '../../../../../src/declarations/deposit0';
+import * as deposit1 from '../../../../../src/declarations/deposit1';
 import * as swap from '../../../../../src/declarations/swap';
 import { useAuth } from '../../../../hooks/use-auth-client';
 
-import DepositImg from '../../../../assets/deposit.png';
+// import DepositImg from '../../../../assets/deposit.png';
 import ckBTC from '../../../../assets/ckBTC.png';
 import ckETH from '../../../../assets/ckETH.png';
+import dckBTC from '../../../../assets/d.ckBTC.png';
+import dckETH from '../../../../assets/d.cketh.png';
+
+const pairMapping = {
+  'eth-btc': {
+    token0Label: 'ETH',
+    token1Label: 'BTC',
+    token0Image: ckETH,
+    token1Image: ckBTC,
+    token0Actor: null,
+    token1Actor: null,
+    token0CanisterId: token1.canisterId,
+    token1CanisterId: token0.canisterId,
+  },
+  'eth-deth': {
+    token0Label: 'ETH',
+    token1Label: 'd.ETH',
+    token0Image: ckETH,
+    token1Image: dckETH,
+    token0Actor: null,
+    token1Actor: null,
+    token0CanisterId: token1.canisterId,
+    token1CanisterId: deposit1.canisterId,
+  },
+  'btc-dbtc': {
+    token0Label: 'BTC',
+    token1Label: 'd.BTC',
+    token0Image: ckBTC,
+    token1Image: dckBTC,
+    token0Actor: null,
+    token1Actor: null,
+    token0CanisterId: token0.canisterId,
+    token1CanisterId: deposit0.canisterId,
+  },
+};
 
 function Deposit() {
+  const { pair } = useParams();
   const {
-    swapActor, token0Actor, token1Actor, principal,
+    swapActor, token0Actor, token1Actor, deposit0Actor, deposit1Actor, principal,
   } = useAuth();
 
   const [loading, setLoading] = useState(false);
@@ -32,6 +71,12 @@ function Deposit() {
   const [isTokenApproved0, setIsTokenApproved0] = useState(true);
   const [isTokenApproved1, setIsTokenApproved1] = useState(true);
   const [isChecked, setIsChecked] = useState(false);
+  const [token0ActorInstance, setToken0ActorInstance] = useState(null);
+  const [token1ActorInstance, setToken1ActorInstance] = useState(null);
+
+  const {
+    token0Label, token1Label, token0Image, token1Image, token0CanisterId, token1CanisterId,
+  } = pairMapping[pair];
 
   const toggleSwitch = () => {
     setIsChecked(!isChecked);
@@ -186,6 +231,20 @@ function Deposit() {
       }
     }
   };
+
+  useEffect(() => {
+    // Set the actors based on the pair
+    if (pair === 'eth-btc') {
+      setToken0ActorInstance(token1Actor);
+      setToken1ActorInstance(token0Actor);
+    } else if (pair === 'eth-deth') {
+      setToken0ActorInstance(token1Actor);
+      setToken1ActorInstance(deposit1Actor);
+    } else if (pair === 'btc-dbtc') {
+      setToken0ActorInstance(token0Actor);
+      setToken1ActorInstance(deposit0Actor);
+    }
+  }, [pair, token0Actor, token1Actor, deposit0Actor, deposit1Actor]);
 
   useEffect(() => {
     const handleGetSupportedTokenList = async () => {

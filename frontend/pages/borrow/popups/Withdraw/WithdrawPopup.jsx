@@ -10,8 +10,9 @@ import styles from './index.module.css';
 import { useAuth } from '../../../../hooks/use-auth-client';
 
 // import * as borrow from '../../../../../src/declarations/borrow';
-import ckBTC from '../../../../assets/ckBTC.png';
-import ckETH from '../../../../assets/ckETH.png';
+// import ckBTC from '../../../../assets/ckBTC.png';
+// import ckETH from '../../../../assets/ckETH.png';
+import { getActor } from '../../../../utils';
 
 Modal.setAppElement('#root');
 
@@ -36,6 +37,7 @@ const customStyles = {
 };
 
 function WithdrawPopup({
+  pairMapping,
   isWithdrawModalOpen,
   closeWithdrawModal,
   decimals,
@@ -43,11 +45,12 @@ function WithdrawPopup({
   tokenBalance,
   setUpdateUI,
 }) {
-  const { borrowActor } = useAuth();
-
+  const { identity } = useAuth();
   const [amountInput, setAmountInput] = useState();
   const [loading, setLoading] = useState(false);
   const [quickInputAmountIn, setQuickInputAmountIn] = useState(0);
+
+  const { borrowCanisterId, token0Image, token1Image } = pairMapping;
 
   const changeAmountIn = (percentage) => {
     if (tokenBalance && !isActive) {
@@ -72,6 +75,7 @@ function WithdrawPopup({
     } else {
       try {
         setLoading(true);
+        const borrowActor = getActor(borrowCanisterId, identity);
         const tx = await borrowActor.withdraw(
           Number(amountInput * 10 ** decimals),
         );
@@ -130,9 +134,9 @@ function WithdrawPopup({
             <div className={styles.IconContainer}>
               <span className={styles.Icon}>
                 {/* <img width={20} height={20} src={ckETH} alt="" /> */}
-                <img width={20} height={20} src={ckBTC} alt="" />
+                <img width={20} height={20} src={token0Image} alt="" />
                 <div style={{ marginTop: '-3px', color: '#858697', fontWeight: 500 }}>{'<>'}</div>
-                <img width={20} height={20} src={ckETH} alt="" />
+                <img width={20} height={20} src={token1Image} alt="" />
               </span>
             </div>
             <input
@@ -176,6 +180,7 @@ WithdrawPopup.propTypes = {
   tokenBalance: PropTypes.number,
   isActive: PropTypes.bool,
   setUpdateUI: PropTypes.func.isRequired,
+  pairMapping: PropTypes.object.isRequired,
 };
 
 WithdrawPopup.defaultProps = {

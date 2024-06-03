@@ -8,13 +8,14 @@ import { Principal } from '@dfinity/principal';
 import styles from './index.module.css';
 
 import { useAuth } from '../../../../hooks/use-auth-client';
+import { getActor } from '../../../../utils';
 
 // import * as borrow from '../../../../../src/declarations/borrow';
-import * as token0 from '../../../../../src/declarations/token0';
-import * as token1 from '../../../../../src/declarations/token1';
+// import * as token0 from '../../../../../src/declarations/token0';
+// import * as token1 from '../../../../../src/declarations/token1';
 
-import ckBTC from '../../../../assets/ckBTC.png';
-import ckETH from '../../../../assets/ckETH.png';
+// import ckBTC from '../../../../assets/ckBTC.png';
+// import ckETH from '../../../../assets/ckETH.png';
 
 Modal.setAppElement('#root');
 
@@ -60,8 +61,9 @@ function BorrowPopup({
   isActive,
   avaiBorrow,
   setUpdateUI,
+  pairMapping,
 }) {
-  const { borrowActor } = useAuth();
+  const { identity } = useAuth();
 
   const [amountInput, setAmountInput] = useState();
   const [loading, setLoading] = useState(false);
@@ -70,6 +72,11 @@ function BorrowPopup({
   const [dropDownDuration, setDropDownDuration] = useState(false);
   const [selectedOption, setSelectedOption] = useState();
   const [quickInputAmountIn, setQuickInputAmountIn] = useState(0);
+
+  const {
+    token0CanisterId, token1CanisterId, borrowCanisterId,
+    token0Image, token1Image, token0Label, token1Label,
+  } = pairMapping;
 
   const handleSelect = (value) => {
     setSelectedOption(value);
@@ -109,10 +116,11 @@ function BorrowPopup({
     } else {
       try {
         setLoading(true);
-        let tokenCanister = token0.canisterId;
+        let tokenCanister = token0CanisterId;
         if (selectToken) {
-          tokenCanister = token1.canisterId;
+          tokenCanister = token1CanisterId;
         }
+        const borrowActor = getActor(borrowCanisterId, identity);
 
         const tx = await borrowActor.borrow(
           amountInput - 10000, // prevent bigInt
@@ -161,7 +169,11 @@ function BorrowPopup({
           Value of collaterial
           &nbsp;
           <svg width="14" height="15" viewBox="0 0 14 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7.00008 5.1665V5.74984M7.00008 7.20817V9.83317M7.00008 13.3332C10.2217 13.3332 12.8334 10.7215 12.8334 7.49984C12.8334 4.27818 10.2217 1.6665 7.00008 1.6665C3.77842 1.6665 1.16675 4.27818 1.16675 7.49984C1.16675 10.7215 3.77842 13.3332 7.00008 13.3332Z" stroke="#CCCCCC" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M7.00008 5.1665V5.74984M7.00008 7.20817V9.83317M7.00008
+            13.3332C10.2217 13.3332 12.8334 10.7215 12.8334 7.49984C12.8334
+            4.27818 10.2217 1.6665 7.00008 1.6665C3.77842 1.6665 1.16675
+            4.27818 1.16675 7.49984C1.16675 10.7215 3.77842 13.3332 7.00008
+            13.3332Z" stroke="#CCCCCC" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
       </div>
@@ -196,28 +208,35 @@ function BorrowPopup({
             <div className={styles.IconContainer}>
               <span className={styles.Icon}>
                 <div>
-                  {!selectToken ? <img width={20} height={20} src={ckBTC} alt="" />
-                    : <img width={20} height={20} src={ckETH} alt="" />}
+                  {!selectToken ? <img width={20} height={20} src={token0Image} alt="" />
+                    : <img width={20} height={20} src={token1Image} alt="" />}
                   <svg onClick={() => setShowSelectToken(!showSelectToken)} width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ cursor: 'pointer' }}>
                     <path fillRule="evenodd" clipRule="evenodd" d="M6.41438 9.53151C6.67313 9.20806 7.1451 9.15562 7.46855 9.41438L12 13.0396L16.5315 9.41438C16.855 9.15562 17.3269 9.20806 17.5857 9.53151C17.8444 9.85495 17.792 10.3269 17.4685 10.5857L12.4685 14.5857C12.1946 14.8048 11.8054 14.8048 11.5315 14.5857L6.53151 10.5857C6.20806 10.3269 6.15562 9.85495 6.41438 9.53151Z" fill="#858697" />
                   </svg>
                 </div>
                 {showSelectToken && (
                 <div className={styles.selectTable}>
+                  {(token0Label === 'ckETH' || token0Label === 'ckBTC')
+                  && (
                   <div
                     className={styles.hoverSelect}
                     aria-hidden="true"
                     onClick={() => { setSelectToken(0); setShowSelectToken(false); }}
                   >
-                    ckBTC
+                    {token0Label}
                   </div>
+                  )}
+
+                  {(token1Label === 'ckETH' || token1Label === 'ckBTC')
+                  && (
                   <div
                     className={styles.hoverSelect}
                     aria-hidden="true"
                     onClick={() => { setSelectToken(1); setShowSelectToken(false); }}
                   >
-                    ckETH
+                    {token1Label}
                   </div>
+                  )}
                 </div>
                 )}
               </span>
@@ -335,6 +354,7 @@ BorrowPopup.propTypes = {
   isActive: PropTypes.bool,
   avaiBorrow: PropTypes.arrayOf(PropTypes.any).isRequired,
   setUpdateUI: PropTypes.func.isRequired,
+  pairMapping: PropTypes.object.isRequired,
 };
 
 BorrowPopup.defaultProps = {

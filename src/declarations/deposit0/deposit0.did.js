@@ -194,19 +194,24 @@ export const idlFactory = ({ IDL }) => {
     'amount' : Balance,
   });
   const Deposit = IDL.Service({
+    'addBorrowId' : IDL.Func([IDL.Principal], [IDL.Text], []),
     'addToken' : IDL.Func([IDL.Principal, IDL.Text], [TxReceipt], []),
     'approveToken' : IDL.Func([IDL.Nat], [ApproveResult], []),
     'balanceOf' : IDL.Func([IDL.Text, IDL.Principal], [IDL.Nat], ['query']),
     'burn' : IDL.Func([BurnArgs], [TransferResult], []),
+    'calculateAPY' : IDL.Func([], [IDL.Float64], []),
     'deposit' : IDL.Func([IDL.Principal, IDL.Nat, IDL.Nat], [TxReceipt], []),
     'depositReward' : IDL.Func([IDL.Principal, IDL.Nat], [TxReceipt], []),
     'deposit_cycles' : IDL.Func([], [], []),
+    'getAverageLock' : IDL.Func([IDL.Principal], [IDL.Opt(IDL.Nat)], []),
+    'getCirculatingSupply' : IDL.Func([], [IDL.Nat], []),
     'getCurrentMultiplier' : IDL.Func([DepositType], [IDL.Float64], []),
     'getDepositId' : IDL.Func(
         [IDL.Principal],
         [IDL.Opt(IDL.Vec(DepositType))],
         [],
       ),
+    'getGlobalAverageLockTime' : IDL.Func([], [IDL.Opt(IDL.Nat)], []),
     'getICRC1SubAccountBalance' : IDL.Func(
         [IDL.Principal, IDL.Text],
         [ICRC1SubAccountBalance],
@@ -220,9 +225,12 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'getPrincipal' : IDL.Func([], [IDL.Principal], []),
+    'getShareOfInterest' : IDL.Func([], [IDL.Opt(IDL.Float64)], []),
     'getTokenBalance' : IDL.Func([IDL.Principal], [Balance__1], []),
     'getTokenDecimals' : IDL.Func([], [IDL.Nat8], []),
     'getTokenId' : IDL.Func([], [IDL.Text], []),
+    'getTotalInterest' : IDL.Func([], [IDL.Nat], []),
+    'getTotalInterestPaidOut' : IDL.Func([IDL.Nat], [IDL.Nat], []),
     'getWrapBalance' : IDL.Func([IDL.Principal], [Balance__1], []),
     'get_transaction' : IDL.Func([TxIndex__1], [IDL.Opt(Transaction__1)], []),
     'get_transactions' : IDL.Func(
@@ -272,12 +280,5 @@ export const idlFactory = ({ IDL }) => {
   return Deposit;
 };
 export const init = ({ IDL }) => {
-  return [
-    IDL.Principal,
-    IDL.Principal,
-    IDL.Principal,
-    IDL.Text,
-    IDL.Text,
-    IDL.Text,
-  ];
+  return [IDL.Principal, IDL.Principal, IDL.Text, IDL.Text, IDL.Text];
 };

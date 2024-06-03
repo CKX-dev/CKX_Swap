@@ -58,15 +58,20 @@ export interface BurnArgs {
   'amount' : Balance,
 }
 export interface Deposit {
+  'addBorrowId' : ActorMethod<[Principal], string>,
   'addToken' : ActorMethod<[Principal, string], TxReceipt>,
   'approveToken' : ActorMethod<[bigint], ApproveResult>,
   'balanceOf' : ActorMethod<[string, Principal], bigint>,
   'burn' : ActorMethod<[BurnArgs], TransferResult>,
+  'calculateAPY' : ActorMethod<[], number>,
   'deposit' : ActorMethod<[Principal, bigint, bigint], TxReceipt>,
   'depositReward' : ActorMethod<[Principal, bigint], TxReceipt>,
   'deposit_cycles' : ActorMethod<[], undefined>,
+  'getAverageLock' : ActorMethod<[Principal], [] | [bigint]>,
+  'getCirculatingSupply' : ActorMethod<[], bigint>,
   'getCurrentMultiplier' : ActorMethod<[DepositType], number>,
   'getDepositId' : ActorMethod<[Principal], [] | [Array<DepositType>]>,
+  'getGlobalAverageLockTime' : ActorMethod<[], [] | [bigint]>,
   'getICRC1SubAccountBalance' : ActorMethod<
     [Principal, string],
     ICRC1SubAccountBalance
@@ -75,9 +80,12 @@ export interface Deposit {
   'getInterestUI' : ActorMethod<[Principal], number>,
   'getMultiplier' : ActorMethod<[Time, Time, number, number, bigint], number>,
   'getPrincipal' : ActorMethod<[], Principal>,
+  'getShareOfInterest' : ActorMethod<[], [] | [number]>,
   'getTokenBalance' : ActorMethod<[Principal], Balance__1>,
   'getTokenDecimals' : ActorMethod<[], number>,
   'getTokenId' : ActorMethod<[], string>,
+  'getTotalInterest' : ActorMethod<[], bigint>,
+  'getTotalInterestPaidOut' : ActorMethod<[bigint], bigint>,
   'getWrapBalance' : ActorMethod<[Principal], Balance__1>,
   'get_transaction' : ActorMethod<[TxIndex__1], [] | [Transaction__1]>,
   'get_transactions' : ActorMethod<

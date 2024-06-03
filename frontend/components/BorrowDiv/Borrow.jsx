@@ -5,11 +5,15 @@ import styles from './index.module.css';
 import BottomBorrow from './BottomBorrow/BottomBorrow';
 import * as token0 from '../../../src/declarations/token0';
 import * as token1 from '../../../src/declarations/token1';
+import * as deposit0 from '../../../src/declarations/deposit0';
+import * as deposit1 from '../../../src/declarations/deposit1';
 
 // import Graph from '../../assets/Graph.png';
 
 function Borrow(
   {
+    pairName,
+    pairMapping,
     openBorrowModal,
     openRepayModal,
     openWithdrawModal,
@@ -21,14 +25,8 @@ function Borrow(
     healthRatio,
     isActive,
     avaiBorrow,
-    avaiBorrowTotal,
   },
 ) {
-  const [isShow, setIsShow] = React.useState(false);
-  const handleShow = () => {
-    setIsShow(!isShow);
-  };
-
   const formatDate = ({ startTime, duration }) => {
     if (startTime == null || duration == null) {
       return 'dd-mm-yyyy';
@@ -48,7 +46,7 @@ function Borrow(
 
   return (
     <div className={styles.Container}>
-      <div style={{ textAlign: 'center', fontSize: '24px', marginBottom: '32px' }}>{'ckBTC<>ckETH'}</div>
+      <div style={{ textAlign: 'center', fontSize: '24px', marginBottom: '32px' }}>{pairName}</div>
       {/* <div className={styles.FlexCenter}>
         <div className={styles.TextCenter}>
           <div>
@@ -56,7 +54,8 @@ function Borrow(
             <div>(24hrs)</div>
           </div>
           <div style={{
-            marginTop: '32px', paddingTop: '32px', borderTop: '1px solid rgba(44, 45, 59, 1)', color: '#83BD67',
+            marginTop: '32px', paddingTop: '32px',
+            borderTop: '1px solid rgba(44, 45, 59, 1)', color: '#83BD67',
           }}
           >
             NaN%
@@ -68,7 +67,8 @@ function Borrow(
             <div>(24hrs)</div>
           </div>
           <div style={{
-            marginTop: '32px', marginBottom: '32px', paddingTop: '32px', borderTop: '1px solid rgba(44, 45, 59, 1)', color: '#BD6767',
+            marginTop: '32px', marginBottom: '32px',
+            paddingTop: '32px', borderTop: '1px solid rgba(44, 45, 59, 1)', color: '#BD6767',
           }}
           >
             NaN%
@@ -79,7 +79,9 @@ function Borrow(
         <div className={styles.ShowMore} aria-hidden="true" onClick={handleShow}>
           <div>Show more</div>
           <svg width="20" height="21" viewBox="0 0 20 21" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M14.1667 8.83358L10 13.0002L5.83334 8.83358" stroke="#858697" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M14.1667 8.83358L10 13.0002L5.83334
+            8.83358" stroke="#858697" strokeWidth="1.5"
+            strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
       )
@@ -87,7 +89,8 @@ function Borrow(
           <div className={styles.ShowMore} aria-hidden="true" onClick={handleShow}>
             <div>Hide</div>
             <svg width="18" height="19" viewBox="0 0 18 19" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M5.25 11.75L9 8L12.75 11.75" stroke="#858697" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5.25 11.75L9 8L12.75 11.75"
+              stroke="#858697" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         )} */}
@@ -105,10 +108,19 @@ function Borrow(
                     {/* {parseFloat((Number(((balanceLpToken) / 10 ** 18))).toFixed(3)) || 0} */}
                   </span>
                   <span className={styles.MediumTitle}>
-                    {' ckBTC <> ckETH LP token'}
+                    {' '}
+                    {pairName}
+                    {' LP token'}
                   </span>
                 </div>
-                <div style={{ color: '#858697', fontSize: '12px' }}># of ckBTC, # of ckETH</div>
+                <div style={{ color: '#858697', fontSize: '12px' }}>
+                  # of
+                  {' '}
+                  {pairMapping.token0Label}
+                  , # of
+                  {' '}
+                  {pairMapping.token1Label}
+                </div>
               </div>
               <button type="button" style={{ width: '90%', marginBottom: '12px' }} className={styles.ButtonContainer} onClick={openSupplyModal}>
                 Supply
@@ -119,8 +131,19 @@ function Borrow(
                 <div style={{ marginTop: '8px' }}>
                   {Math.round((tokenBalance / 10 ** 18) * 100) / 100}
                   {' '}
-                  <span className={styles.MediumTitle}>{'ckBTC <> ckETH LP token'}</span>
-                  <div style={{ color: '#858697', fontSize: '12px' }}># of ckBTC, # of ckETH</div>
+                  <span className={styles.MediumTitle}>
+                    {' '}
+                    {pairName}
+                    {' LP token'}
+                  </span>
+                  <div style={{ color: '#858697', fontSize: '12px' }}>
+                    # of
+                    {' '}
+                    {pairMapping.token0Label}
+                    , # of
+                    {' '}
+                    {pairMapping.token1Label}
+                  </div>
                 </div>
               </div>
             </div>
@@ -128,6 +151,9 @@ function Borrow(
             <div className={styles.ModalControlsItem}>
               <div>Available to borrow</div>
               <div style={{ display: 'flex', height: '25px' }}>
+                {(pairMapping.token0CanisterId !== deposit0.canisterId
+                && pairMapping.token0CanisterId !== deposit1.canisterId)
+                && (
                 <div className={styles.BorrowAvaiItem}>
                   <div style={{ marginBottom: '-8px' }}>
                     <span className={styles.largeNum}>
@@ -135,10 +161,15 @@ function Borrow(
                         ? Math.round(Number(((avaiBorrow[0]) / 10 ** 18)) * 1000) / 1000 : 0}
                     </span>
                     {' '}
-                    <span className={styles.MediumTitle}>ckBTC</span>
+                    <span className={styles.MediumTitle}>{pairMapping.token0Label}</span>
                   </div>
                   {/* <div className={styles.TextSmall}>{'< $ 0.01'}</div> */}
                 </div>
+                )}
+
+                {(pairMapping.token1CanisterId !== deposit0.canisterId
+                && pairMapping.token1CanisterId !== deposit1.canisterId)
+                && (
                 <div className={styles.BorrowAvaiItem} style={{ paddingLeft: '24px' }}>
                   <div style={{ marginBottom: '-8px' }}>
                     <span className={styles.largeNum}>
@@ -146,27 +177,18 @@ function Borrow(
                         ? Math.round(Number(((avaiBorrow[1]) / 10 ** 18)) * 1000) / 1000 : 0}
                     </span>
                     {' '}
-                    <span className={styles.MediumTitle}>ckETH</span>
+                    <span className={styles.MediumTitle}>{pairMapping.token1Label}</span>
                   </div>
                   {/* <div className={styles.TextSmall}>{'< $ 0.01'}</div> */}
                 </div>
+                )}
               </div>
               <button type="button" className={styles.ButtonContainer} onClick={openBorrowModal}>
                 Borrow
                 <div className={styles.Ellipse} />
               </button>
               <div className={styles.TextXSmall}>
-                based on available LP, you may borrow up to
-                {' '}
-                {!isActive
-                  ? Math.round(Number(((avaiBorrowTotal[0]) / 10 ** 18)) * 1000) / 1000 : 0}
-                {' '}
-                ckBTC or
-                {' '}
-                {!isActive
-                  ? Math.round(Number(((avaiBorrowTotal[1]) / 10 ** 18)) * 1000) / 1000 : 0}
-                {' '}
-                ckETH
+                for testnet, please repay existing loan before making another loan
               </div>
 
               <div style={{ display: 'flex', marginTop: '12px' }}>
@@ -192,6 +214,7 @@ function Borrow(
                           ? 'ckETH' : '-'}
                     </span>
                   </div>
+                  {isActive && (
                   <div className={styles.TextXSmall}>
                     This amount will be automatically repaid on
                     {' '}
@@ -199,6 +222,7 @@ function Borrow(
                     {' '}
                     date
                   </div>
+                  )}
                 </div>
                 <div className={styles.BorrowAvaiItem} style={{ paddingLeft: '24px', paddingRight: '0px' }}>
                   <div className={styles.MediumTitlev2} style={{ display: 'flex' }}>
@@ -229,7 +253,9 @@ function Borrow(
                       ? Math.round(Number(((balanceDeposit) / 10 ** 18)) * 1000) / 1000 : 0}
                   </span>
                   <span className={styles.MediumTitle}>
-                    {' ckBTC <> ckETH LP token'}
+                    {' '}
+                    {pairName}
+                    {' LP token'}
                   </span>
                 </div>
                 {/* <div style={{ color: '#858697', fontSize: '12px' }}>{'< $ 0.01'}</div> */}
@@ -251,6 +277,8 @@ function Borrow(
 }
 
 Borrow.propTypes = {
+  pairName: PropTypes.string.isRequired,
+  pairMapping: PropTypes.object.isRequired,
   openBorrowModal: PropTypes.func.isRequired,
   openRepayModal: PropTypes.func.isRequired,
   openWithdrawModal: PropTypes.func.isRequired,
@@ -262,7 +290,6 @@ Borrow.propTypes = {
   healthRatio: PropTypes.number,
   isActive: PropTypes.bool,
   avaiBorrow: PropTypes.array,
-  avaiBorrowTotal: PropTypes.array,
 };
 
 Borrow.defaultProps = {
@@ -273,7 +300,6 @@ Borrow.defaultProps = {
   healthRatio: 0,
   isActive: false,
   avaiBorrow: [0, 0],
-  avaiBorrowTotal: [0, 0],
 };
 
 export default Borrow;

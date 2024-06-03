@@ -60,7 +60,7 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(DepositType)],
         [],
       ),
-    'getHealthRaito' : IDL.Func([IDL.Principal], [IDL.Float64], []),
+    'getHealthRatio' : IDL.Func([IDL.Principal], [IDL.Float64], []),
     'getLoanDetail' : IDL.Func([IDL.Nat], [IDL.Opt(LoanDetail)], []),
     'getPairInfo' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Nat)], []),
     'getPairInfoPrincipal' : IDL.Func([IDL.Nat], [IDL.Vec(IDL.Text)], []),

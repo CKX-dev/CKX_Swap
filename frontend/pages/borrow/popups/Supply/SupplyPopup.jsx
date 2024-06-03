@@ -8,11 +8,12 @@ import { Principal } from '@dfinity/principal';
 import styles from './index.module.css';
 
 import { useAuth } from '../../../../hooks/use-auth-client';
+import { getActor } from '../../../../utils';
 
-import * as borrow from '../../../../../src/declarations/borrow';
+// import * as borrow from '../../../../../src/declarations/borrow';
 
-import ckBTC from '../../../../assets/ckBTC.png';
-import ckETH from '../../../../assets/ckETH.png';
+// import ckBTC from '../../../../assets/ckBTC.png';
+// import ckETH from '../../../../assets/ckETH.png';
 
 Modal.setAppElement('#root');
 
@@ -37,6 +38,7 @@ const customStyles = {
 };
 
 function SupplyPopup({
+  pairMapping,
   isSupplyModalOpen,
   closeSupplyModal,
   decimals,
@@ -44,11 +46,15 @@ function SupplyPopup({
   tokenBalance,
   setUpdateUI,
 }) {
-  const { borrowActor, aggregatorActor } = useAuth();
+  const { identity } = useAuth();
 
   const [amountInput, setAmountInput] = useState();
   const [loading, setLoading] = useState(false);
   const [quickInputAmountIn, setQuickInputAmountIn] = useState(0);
+
+  const {
+    aggregatorCanisterId, borrowCanisterId, token0Image, token1Image,
+  } = pairMapping;
 
   const changeAmountIn = (percentage) => {
     if (tokenBalance && !isActive) {
@@ -79,11 +85,14 @@ function SupplyPopup({
         amount: Number(amountInput * 10 ** decimals),
         expected_allowance: [],
         expires_at: [],
-        spender: Principal.fromText(borrow.canisterId),
+        spender: Principal.fromText(borrowCanisterId),
       };
 
       try {
         setLoading(true);
+        const aggregatorActor = getActor(aggregatorCanisterId, identity);
+        const borrowActor = getActor(borrowCanisterId, identity);
+
         const tx0 = await aggregatorActor.icrc2_approve(record);
         console.log('Approve: ', tx0);
         const tx = await borrowActor.deposit(
@@ -142,9 +151,9 @@ function SupplyPopup({
           <div className={styles.InputGroup}>
             <div className={styles.IconContainer}>
               <span className={styles.Icon}>
-                <img width={20} height={20} src={ckBTC} alt="" />
+                <img width={20} height={20} src={token0Image} alt="" />
                 <div style={{ marginTop: '-3px', color: '#858697', fontWeight: 500 }}>{'<>'}</div>
-                <img width={20} height={20} src={ckETH} alt="" />
+                <img width={20} height={20} src={token1Image} alt="" />
               </span>
             </div>
             <input
@@ -187,6 +196,7 @@ SupplyPopup.propTypes = {
   decimals: PropTypes.number,
   isActive: PropTypes.bool,
   tokenBalance: PropTypes.array,
+  pairMapping: PropTypes.object.isRequired,
 };
 
 SupplyPopup.defaultProps = {

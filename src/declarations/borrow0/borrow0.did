@@ -1,0 +1,81 @@
+type TxReceipt = 
+ variant {
+   err: text;
+   ok: nat;
+ };
+type TxIndex = nat;
+type TransferResult = 
+ variant {
+   Err: TransferError;
+   Ok: TxIndex;
+ };
+type TransferError = 
+ variant {
+   BadBurn: record {min_burn_amount: Balance;};
+   BadFee: record {expected_fee: Balance;};
+   CreatedInFuture: record {ledger_time: Timestamp;};
+   Duplicate: record {duplicate_of: TxIndex;};
+   GenericError: record {
+                   error_code: nat;
+                   message: text;
+                 };
+   InsufficientFunds: record {balance: Balance;};
+   TemporarilyUnavailable;
+   TooOld;
+ };
+type Timestamp = nat64;
+type Time = int;
+type LoanDetail = 
+ record {
+   borrower: principal;
+   id: nat;
+   isRepaid: bool;
+   tokenIdBorrow: principal;
+ };
+type DepositType = 
+ record {
+   amount: nat;
+   borrow: nat;
+   duration: nat;
+   interest: nat;
+   isActive: bool;
+   isAllowWithdraw: bool;
+   isUsing: bool;
+   loadId: nat;
+   reserve0: nat;
+   reserve1: nat;
+   startTime: Time;
+   tokenIdBorrow: principal;
+ };
+type Borrow = 
+ service {
+   borrow: (nat, principal, nat) -> (text);
+   checkRemoveLP: (vec principal) -> (vec nat);
+   checkRemoveLP_2: (principal) -> (vec float64);
+   deposit: (nat) -> (text);
+   getAvaiableToBorrow: (nat) -> (vec nat);
+   getCurrentTotalBorrowed: () -> (record {
+                                     token0: nat;
+                                     token1: nat;
+                                   });
+   getDepositId: () -> (opt DepositType);
+   getDepositIdPerUser: (principal) -> (opt DepositType);
+   getHealthRatio: (principal) -> (float64);
+   getLoanDetail: (nat) -> (opt LoanDetail);
+   getPairInfo: (nat) -> (vec nat);
+   getPairInfoPrincipal: (nat) -> (vec text);
+   getReserves: () -> (vec nat);
+   getTokenBalance: (principal, principal) -> (Balance__1);
+   getTokenDecimals: (principal) -> (nat8);
+   getloanId: () -> (nat);
+   rePay: () -> (text);
+   sendInterestToLendingCanister: () -> (text);
+   sendTokenToLendingCanister: (principal, nat) -> (TransferResult);
+   totalSupply_call: (text) -> (nat);
+   user: () -> (text);
+   withdraw: (nat) -> (text);
+   withdrawTokenFromSwap: (principal, nat) -> (TxReceipt);
+ };
+type Balance__1 = nat;
+type Balance = nat;
+service : (principal, principal, principal, text, principal, principal) -> Borrow

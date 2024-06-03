@@ -109,6 +109,7 @@ export interface Swap {
   'exportTokenTypes' : ActorMethod<[], Array<[string, string]>>,
   'exportTokens' : ActorMethod<[], Array<TokenInfoExt>>,
   'failedWithdrawRefund' : ActorMethod<[string], WithdrawRefundReceipt>,
+  'getAPR' : ActorMethod<[Principal, Principal], number>,
   'getAllPairs' : ActorMethod<[], Array<PairInfoExt>>,
   'getAllRewardPairs' : ActorMethod<[], Array<PairInfoExt>>,
   'getAuthList' : ActorMethod<[], Array<[Principal, boolean]>>,
@@ -161,10 +162,6 @@ export interface Swap {
   'removeAuth' : ActorMethod<[Principal], boolean>,
   'removeLiquidity' : ActorMethod<
     [Principal, Principal, bigint, bigint, bigint, Principal, bigint],
-    TxReceipt
-  >,
-  'removeLiquidityOneToken' : ActorMethod<
-    [Principal, Principal, Principal, bigint, bigint, Principal, bigint],
     TxReceipt
   >,
   'removeUserFromBlocklist' : ActorMethod<[Principal], boolean>,
