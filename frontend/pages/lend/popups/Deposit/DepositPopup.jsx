@@ -77,7 +77,7 @@ function DepositPopup({
         memo: [],
         from_subaccount: [],
         created_at_time: [],
-        amount: Number(amountInput * 10 ** decimals),
+        amount: Number(amountInput * 10 ** decimals) - 10000,
         expected_allowance: [],
         expires_at: [],
         spender: Principal.fromText(btcOrEth === 'ckETH' ? deposit1.canisterId : deposit0.canisterId),
@@ -89,7 +89,7 @@ function DepositPopup({
         console.log('Approve: ', tx0);
         const tx = await depositActor.deposit(
           Principal.fromText(btcOrEth === 'ckETH' ? token1.canisterId : token0.canisterId),
-          Number(amountInput * 10 ** decimals),
+          Number(amountInput * 10 ** decimals) - 10000,
           Number(selectedOption),
         );
         console.log(tx);

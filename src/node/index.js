@@ -30,10 +30,11 @@ const effectiveCanisterId1 = canisterId?.toString()
 // const effectiveCanisterId = 'be2us-64aaa-aaaaa-qaabq-cai';
 
 const agent = new HttpAgent({
-  identity,
-  host: 'https://ic0.app/',
+  identity: await identity,
+  host: 'https://icp-api.io',
   // host: 'http://127.0.0.1:4943',
   fetch,
+  timeout: 30000,
 });
 
 const actor = createActor(effectiveCanisterId, {
@@ -46,7 +47,32 @@ const actor1 = createActor(effectiveCanisterId1, {
   agent,
 });
 
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(uri, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 60000,
+  connectTimeoutMS: 60000,
+  retryWrites: true,
+});
+
+async function withRetry(fn, retries = 5, delay = 1000, backoffFactor = 2) {
+  let attempt = 0;
+  while (attempt < retries) {
+    try {
+      return await fn();
+    } catch (error) {
+      attempt++;
+      console.log(`Attempt ${attempt} failed: ${error.message}`);
+      if (attempt < retries) {
+        const backoffDelay = delay * backoffFactor ** (attempt - 1);
+        await new Promise((resolve) => setTimeout(resolve, backoffDelay));
+      } else {
+        throw error;
+      }
+    }
+  }
+}
 
 const db = client.db('ICP');
 const collection = db.collection('CKX');
@@ -55,17 +81,30 @@ const collection1 = db.collection('CKX1');
 
 async function main() {
   setInterval(async () => {
-    await processBorrowCanister(actor, collection);
-    await processBorrowCanister(actor0, collection0);
-    await processBorrowCanister(actor1, collection1);
+    await Promise.all([
+      processBorrowCanister(actor, collection),
+      processBorrowCanister(actor0, collection0),
+      processBorrowCanister(actor1, collection1)
+    ]);
   }, [60000]);
 
   setInterval(async () => {
     try {
       console.log('send interest');
-      await actor.sendInterestToLendingCanister();
-      await actor0.sendInterestToLendingCanister();
-      await actor1.sendInterestToLendingCanister();
+      await Promise.all([
+        withRetry(() => actor.sendInterestToLendingCanister()).then(result => {
+          console.log('actor.sendInterestToLendingCanister result:', result);
+          return result;
+        }),
+        withRetry(() => actor0.sendInterestToLendingCanister()).then(result => {
+          console.log('actor0.sendInterestToLendingCanister result:', result);
+          return result;
+        }),
+        withRetry(() => actor1.sendInterestToLendingCanister()).then(result => {
+          console.log('actor1.sendInterestToLendingCanister result:', result);
+          return result;
+        })
+      ]);
     } catch (error) {
       console.error('Error in sendInterestToLendingCanister:', error);
     }
@@ -81,11 +120,9 @@ async function processBorrowCanister(borrowActor, col) {
 
     if (lastUser.id < currentLoanId) {
       let i = lastUser.id;
-      console.log('lastUser_id: ', lastUser.id);
       while (i <= currentLoanId) {
         const newLoan = await borrowActor.getLoanDetail(i);
         if (!newLoan[0].isRepaid) {
-          console.log('First if: ', newLoan[0]);
           await insertUser(
             col,
             Number(newLoan[0].id),
@@ -105,7 +142,6 @@ async function processBorrowCanister(borrowActor, col) {
       while (i <= currentLoanId) {
         const newLoan = await borrowActor.getLoanDetail(i);
         if (!newLoan[0].isRepaid) {
-          console.log('First if: ', newLoan[0]);
           await insertUser(
             col,
             Number(newLoan[0].id),
@@ -139,7 +175,6 @@ async function processBorrowCanister(borrowActor, col) {
       while (i <= currentLoanId) {
         const newLoan = await borrowActor.getLoanDetail(i);
         if (!newLoan[0].isRepaid) {
-          console.log('Else stmt: ', newLoan[0]);
           await insertUser(
             col,
             Number(newLoan[0].id),
@@ -160,7 +195,10 @@ async function processBorrowCanister(borrowActor, col) {
 main();
 
 async function run() {
-  await client.connect();
+  await withRetry(() => client.connect({
+    ssl: true,
+    tls: true,
+  }));
   await client.db('admin').command({ ping: 1 });
   console.log('Pinged your deployment. You successfully connected to MongoDB!');
   getLength(collection);

@@ -506,11 +506,7 @@ shared (msg) actor class Borrow(
                     created_at_time = null;
                     expected_allowance = null
                 };
-                Debug.print("Approve interest");
-                Debug.print(debug_show(approve));
                 var txResult = await deposit_canister.depositReward(deposit.tokenIdBorrow, deposit.interest);
-                Debug.print("txResult");
-                Debug.print(debug_show(txResult));
 
                 var newDepInform : DepositType = {
                     amount = deposit.amount;

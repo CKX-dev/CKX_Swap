@@ -129,3 +129,10 @@ dfx canister call token0 icrc1_transfer '(record {  to = record {owner=principal
 
 dfx canister call token1 icrc1_transfer '(record {  to = record {owner=principal "323jc-yaaaa-aaaap-qhjsa-cai"}; amount= 200_000_000_000_000_000_000 })' --network ic
 ```
+
+### Start server command
+```bash
+docker build -t ckx .
+
+docker run -d --name ckx-container ckx
+```

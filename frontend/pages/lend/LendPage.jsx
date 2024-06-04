@@ -78,6 +78,12 @@ function LendPage() {
   }, [switchPage, deposit0Actor, deposit1Actor, token0Actor, token1Actor]);
 
   useEffect(() => {
+    setIsDepositModalOpen(false);
+    setIsWithdrawModalOpen(false);
+    setIsClaimOpen(false);
+  }, [switchPage]);
+
+  useEffect(() => {
     const getBalanceUI = async () => {
       if (principal && depositActor) {
         try {
@@ -168,7 +174,7 @@ function LendPage() {
         decimals={decimals}
         tokenBalance={tokenBalance}
         setUpdateUI={setUpdateUI}
-        depositActor={depositActor}
+        depositActor={switchPage === 'ckETH' ? deposit1Actor : deposit0Actor}
         tokenActor={tokenActor}
         btcOrEth={switchPage}
       />
@@ -178,7 +184,7 @@ function LendPage() {
         decimals={decimals}
         wrapBalance={wrapBalance}
         setUpdateUI={setUpdateUI}
-        depositActor={depositActor}
+        depositActor={switchPage === 'ckETH' ? deposit1Actor : deposit0Actor}
         btcOrEth={switchPage}
       />
       <ClaimPopup
@@ -187,7 +193,7 @@ function LendPage() {
         decimals={decimals}
         value={(interest / 10 ** decimals).toFixed(6)}
         setUpdateUI={setUpdateUI}
-        depositActor={depositActor}
+        depositActor={switchPage === 'ckETH' ? deposit1Actor : deposit0Actor}
         btcOrEth={switchPage}
       />
       <div className={styles.Container}>
@@ -303,7 +309,7 @@ function LendPage() {
                 <div className={styles.TextTContent}>
                   {Number(lockedckETH) === 0
                     ? '0%'
-                    : `${(apy).toFixed(2)}%`}
+                    : `${(apy).toFixed(4)}%`}
                 </div>
               </div>
             </div>
@@ -315,7 +321,7 @@ function LendPage() {
         </div>
         <BottomLend
           switchPage={switchPage}
-          depositActor={depositActor}
+          depositActor={switchPage === 'ckETH' ? deposit1Actor : deposit0Actor}
           updateUI={updateUI}
           lockedckETH={lockedckETH}
           unlockedckETH={unlockedckETH}
